@@ -12,10 +12,49 @@
   min-height: 100vh;
   gap: 8px;
   text-align: center;
+  color: var(--text);
 }
 
 .status-screen--error {
-  color: #b00020;
+  color: #ff6b6b;
+}
+
+.top-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 32px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.top-bar__row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.top-bar__left {
+  justify-self: start;
+}
+
+.top-bar__right {
+  justify-self: end;
+}
+
+.top-bar__heading {
+  grid-column: 2;
+  margin: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.top-bar__progress-row {
+  display: flex;
+  justify-content: center;
 }
 
 .test-area {
@@ -44,20 +83,21 @@
   width: 56px;
   height: 56px;
   border-radius: 8px;
-  border: 2px solid #ccc;
-  background: #fff;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .stimulus-button:hover {
-  border-color: #888;
+  border-color: var(--text-dim);
 }
 
 .stimulus-button--active {
-  border-color: #2f6fed;
-  background: #2f6fed;
+  border-color: var(--accent);
+  background: var(--accent);
   color: #fff;
 }
 
@@ -81,8 +121,8 @@
   align-items: center;
   justify-content: flex-end;
   font-size: 11px;
-  color: #777;
-  border-top: 1px solid #eee;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
 }
 
 .rating-slider__band:first-child {
@@ -90,23 +130,43 @@
 }
 
 .rating-slider__track {
+  position: relative;
   width: 40px;
-  height: 220px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 200px;
+  margin-top: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: ns-resize;
+  touch-action: none;
+  overflow: hidden;
 }
 
-.rating-slider__input {
-  width: 200px;
-  height: 32px;
-  transform: rotate(-90deg);
-  cursor: pointer;
-  accent-color: #aaa;
+.rating-slider--disabled .rating-slider__track {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
-.rating-slider__input--touched {
-  accent-color: #2f6fed;
+.rating-slider__fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--border);
+}
+
+.rating-slider__thumb {
+  position: absolute;
+  left: 50%;
+  width: 28px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--text-dim);
+  transform: translate(-50%, 50%);
+}
+
+.rating-slider__thumb--touched {
+  background: var(--accent);
 }
 
 .side-controls {
@@ -122,59 +182,50 @@
   font-size: 15px;
   font-weight: 600;
   border-radius: 8px;
-  border: 2px solid #ccc;
-  background: #fff;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
   cursor: pointer;
   min-width: 96px;
 }
 
 .transport-button:disabled,
 .next-button:disabled {
-  color: #bbb;
-  border-color: #e5e5e5;
+  color: var(--text-dim);
+  border-color: var(--border);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .next-button:not(:disabled) {
-  border-color: #2f6fed;
-  color: #2f6fed;
-}
-
-.bottom-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 16px 32px;
-  border-top: 1px solid #e0e0e0;
-  background: #fafafa;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .progress-bar {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1;
-  max-width: 480px;
+  width: 66.6667%;
 }
 
 .progress-bar__track {
   flex: 1;
   height: 10px;
-  background: #e5e5e5;
+  background: var(--border);
   border-radius: 5px;
   overflow: hidden;
 }
 
 .progress-bar__fill {
   height: 100%;
-  background: #2f6fed;
+  background: var(--accent);
   transition: width 0.2s ease;
 }
 
 .progress-bar__label {
   font-size: 13px;
-  color: #666;
+  color: var(--text-dim);
   white-space: nowrap;
 }
 
@@ -183,11 +234,13 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #444;
+  color: var(--text-dim);
 }
 
 .device-selector select {
   padding: 6px 8px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
 }

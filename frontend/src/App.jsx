@@ -46,6 +46,10 @@ export default function App() {
   }
 
   function handleSelect(letter) {
+    if (letter === selectedLetter) {
+      handleToggle()
+      return
+    }
     api
       .select(letter)
       .then(() => {
@@ -114,6 +118,18 @@ export default function App() {
 
   return (
     <div className="app">
+      <header className="top-bar">
+        <div className="top-bar__row">
+          <div className="top-bar__left">
+            <DeviceSelector devices={devices} selectedIndex={deviceIndex} onChange={handleDeviceChange} />
+          </div>
+          <h1 className="top-bar__heading">Rate the similarity of each stimulus to the reference</h1>
+          <div className="top-bar__right" />
+        </div>
+        <div className="top-bar__progress-row">
+          <ProgressBar current={page.page_index + 1} total={page.total_pages} />
+        </div>
+      </header>
       <main className="test-area">
         <div className="stimuli-row">
           {page.letters.map((letter) => (
@@ -123,6 +139,7 @@ export default function App() {
                 <RatingSlider
                   value={ratings[letter] ?? 50}
                   touched={!!touched[letter]}
+                  disabled={selectedLetter !== letter}
                   onChange={(value) => handleSliderChange(letter, value)}
                 />
               )}
@@ -137,10 +154,6 @@ export default function App() {
           onNext={handleNext}
         />
       </main>
-      <footer className="bottom-bar">
-        <ProgressBar current={page.page_index + 1} total={page.total_pages} />
-        <DeviceSelector devices={devices} selectedIndex={deviceIndex} onChange={handleDeviceChange} />
-      </footer>
     </div>
   )
 }

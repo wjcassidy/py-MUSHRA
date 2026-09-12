@@ -1,10 +1,18 @@
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   font: 16px/1.4 system-ui, 'Segoe UI', Roboto, sans-serif;
+  --bg: #14161c;
+  --surface: #1c1f27;
+  --border: #333743;
+  --text: #e8e8ee;
+  --text-dim: #9a9ea8;
+  --accent: #4c8dff;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
 }
 
 #root {

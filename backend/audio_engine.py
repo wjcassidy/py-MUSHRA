@@ -12,6 +12,8 @@ from backend.config import Config
 
 logger = logging.getLogger("py_mushra.audio_engine")
 
+CROSSFADE_SECONDS = 0.05
+
 _INT_MAX = {
     np.dtype("int16"): 2**15,
     np.dtype("int32"): 2**31,
@@ -52,6 +54,10 @@ class AudioEngine:
         self.playhead = 0
         self._pending_reset = True
         self._carry = np.zeros((0, 0), dtype=np.float32)
+
+        self.crossfade_from: Path | None = None
+        self.crossfade_total = 0
+        self.crossfade_done = 0
 
         self.device_index: int | None = None
         self.stream: sd.OutputStream | None = None
@@ -182,6 +188,8 @@ class AudioEngine:
             self.playhead = 0
             self._pending_reset = True
             self._carry = np.zeros((0, 0), dtype=np.float32)
+            self.crossfade_from = None
+            self.crossfade_done = 0
 
     def select(self, path: Path) -> None:
         self._load_stimulus(path)  # populate cache outside the lock-held callback path
@@ -189,8 +197,18 @@ class AudioEngine:
             if self._carry.shape[1] > 0:
                 self.playhead = max(0, self.playhead - self._carry.shape[1])
                 self._carry = np.zeros((0, 0), dtype=np.float32)
+            previous = self.current_path
             self.current_path = path
             self.playing = True
+            if previous is not None and previous != path:
+                # Crossfade in the Ambisonic domain so a single plugin instance/state
+                # handles the (already-blended) signal -- avoids double-decoding.
+                self.crossfade_from = previous
+                self.crossfade_total = max(1, int(round(CROSSFADE_SECONDS * self.sample_rate)))
+                self.crossfade_done = 0
+            else:
+                self.crossfade_from = None
+                self.crossfade_done = 0
 
     def play(self) -> None:
         with self._lock:
@@ -202,6 +220,15 @@ class AudioEngine:
 
     # -- realtime callback ----------------------------------------------------
 
+    def _read_chunk(self, path: Path, start_sample: int, length: int) -> np.ndarray:
+        source = self._stimulus_cache[path]
+        source_len = source.shape[1]
+        start = start_sample % source_len
+        end = start + length
+        if end <= source_len:
+            return source[:, start:end]
+        return np.concatenate([source[:, start:], source[:, : end - source_len]], axis=1)
+
     def _callback(self, outdata: np.ndarray, frames: int, time_info, status) -> None:
         if status:
             logger.warning("sounddevice status: %s", status)
@@ -211,17 +238,25 @@ class AudioEngine:
                 outdata[:] = 0
                 return
 
-            source = self._stimulus_cache[self.current_path]
-            num_source_channels, source_len = source.shape
+            num_source_channels = self._stimulus_cache[self.current_path].shape[0]
 
             while self._carry.shape[1] < frames:
-                start = self.playhead % source_len
-                end = start + self.block_size
-                if end <= source_len:
-                    chunk = source[:, start:end]
-                else:
-                    chunk = np.concatenate([source[:, start:], source[:, : end - source_len]], axis=1)
-                self.playhead += self.block_size
+                length = self.block_size
+                chunk = self._read_chunk(self.current_path, self.playhead, length)
+
+                if self.crossfade_from is not None:
+                    from_chunk = self._read_chunk(self.crossfade_from, self.playhead, length)
+                    idx = np.arange(self.crossfade_done, self.crossfade_done + length, dtype=np.float32)
+                    t = np.clip(idx / self.crossfade_total, 0.0, 1.0)
+                    gain_to = np.sin(t * np.pi / 2.0).astype(np.float32)
+                    gain_from = np.cos(t * np.pi / 2.0).astype(np.float32)
+                    chunk = from_chunk * gain_from[np.newaxis, :] + chunk * gain_to[np.newaxis, :]
+                    self.crossfade_done += length
+                    if self.crossfade_done >= self.crossfade_total:
+                        self.crossfade_from = None
+                        self.crossfade_done = 0
+
+                self.playhead += length
 
                 if self.plugin is not None:
                     try:
