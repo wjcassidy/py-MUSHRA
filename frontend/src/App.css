@@ -246,6 +246,24 @@
   cursor: not-allowed;
 }
 
+.reorder-button-wrap {
+  position: relative;
+  display: flex;
+}
+
+.reorder-button-message {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 160px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+  text-align: center;
+}
+
 .stimulus-button:hover {
   border-color: var(--text-dim);
 }

@@ -186,7 +186,7 @@ export default function App() {
   const nextDisabled = !allTouched || !hasTopRating
   const nextReasons = []
   if (!allTouched) nextReasons.push('Please adjust every slider.\n')
-  if (!hasTopRating) nextReasons.push('Rate at least one stimulus at 100.')
+  if (!hasTopRating) nextReasons.push('Rate at least one excerpt at 100.')
 
   return (
     <div className="app">
@@ -194,7 +194,7 @@ export default function App() {
         <DeviceSelector devices={devices} selectedIndex={deviceIndex} onChange={handleDeviceChange} />
       </header>
       <main className="test-area">
-        <h1 className="test-area__heading">Rate the similarity of each stimulus to the reference</h1>
+        <h1 className="test-area__heading">Rate the similarity of each excerpt to the reference</h1>
         <div className="test-area__content">
           <div className="test-area__reference stimulus-column stimulus-column--reference">
             <StimulusButton
