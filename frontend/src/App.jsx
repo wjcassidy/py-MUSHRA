@@ -124,27 +124,29 @@ export default function App() {
       <main className="test-area">
         <h1 className="test-area__heading">Rate the similarity of each stimulus to the reference</h1>
         <div className="test-area__content">
+          <div className="test-area__reference stimulus-column stimulus-column--reference">
+            <StimulusButton
+              letter={page.reference_letter}
+              label="Reference"
+              active={selectedLetter === page.reference_letter && isPlaying}
+              onClick={handleSelect}
+            />
+          </div>
           <div className="stimuli-row">
-            {page.letters.map((letter) => (
-              <div
-                key={letter}
-                className={`stimulus-column${letter === page.reference_letter ? ' stimulus-column--reference' : ''}`}
-              >
+            {evalLetters.map((letter) => (
+              <div key={letter} className="stimulus-column">
                 <StimulusButton
                   letter={letter}
-                  label={letter === page.reference_letter ? 'Reference' : letter}
                   active={selectedLetter === letter && isPlaying}
                   onClick={handleSelect}
                 />
-                {letter !== page.reference_letter && (
-                  <RatingSlider
-                    value={ratings[letter] ?? 50}
-                    touched={!!touched[letter]}
-                    active={selectedLetter === letter}
-                    onChange={(value) => handleSliderChange(letter, value)}
-                    onActivate={() => handleSelect(letter)}
-                  />
-                )}
+                <RatingSlider
+                  value={ratings[letter] ?? 50}
+                  touched={!!touched[letter]}
+                  active={selectedLetter === letter}
+                  onChange={(value) => handleSliderChange(letter, value)}
+                  onActivate={() => handleSelect(letter)}
+                />
               </div>
             ))}
           </div>
