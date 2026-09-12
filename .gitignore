@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+results/*.csv
+node_modules/
+frontend/dist/
+.DS_Store
+.idea
+stimuli

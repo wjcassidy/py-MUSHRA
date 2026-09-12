@@ -1,0 +1,43 @@
+#!/bin/bash
+# Starts (or restarts) both the py-MUSHRA backend and frontend.
+# Run this before each participant -- the backend picks a fresh random seed
+# on startup, so restarting it resets item order / letter randomization.
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+BACKEND_PORT=8000
+FRONTEND_PORT=5173
+
+echo "Stopping any previous py-MUSHRA servers..."
+lsof -ti :$BACKEND_PORT | xargs kill -9 2>/dev/null || true
+lsof -ti :$FRONTEND_PORT | xargs kill -9 2>/dev/null || true
+
+BACKEND_PID=""
+FRONTEND_PID=""
+
+cleanup() {
+  echo "Stopping servers..."
+  [ -n "$BACKEND_PID" ] && kill "$BACKEND_PID" 2>/dev/null || true
+  [ -n "$FRONTEND_PID" ] && kill "$FRONTEND_PID" 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
+echo "Starting backend on port $BACKEND_PORT..."
+"$SCRIPT_DIR/.venv/bin/uvicorn" backend.main:app --port $BACKEND_PORT &
+BACKEND_PID=$!
+
+echo "Starting frontend on port $FRONTEND_PORT..."
+(cd "$SCRIPT_DIR/frontend" && npm run dev -- --port $FRONTEND_PORT --strictPort) &
+FRONTEND_PID=$!
+
+sleep 2
+open "http://localhost:$FRONTEND_PORT" 2>/dev/null || true
+
+echo ""
+echo "----------------------------------------------------"
+echo "py-MUSHRA is running. Press Ctrl+C to stop both servers."
+echo "Frontend: http://localhost:$FRONTEND_PORT"
+echo "----------------------------------------------------"
+wait

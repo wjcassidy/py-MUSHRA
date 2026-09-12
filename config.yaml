@@ -1,0 +1,27 @@
+# py-MUSHRA configuration
+
+# Folder of "<prefix>_<suffix>.wav" stimuli. Files sharing a prefix form one
+# MUSHRA page/item. The suffix "target" marks the true reference for that item.
+stimuli_dir: demo_stimuli
+
+# Where timestamped result CSVs are written.
+results_dir: results
+
+# Path to the IEM AllRADecoder plugin (VST3 .vst3 bundle or AU .component),
+# e.g. "/Library/Audio/Plug-Ins/VST3/AllRADecoder.vst3". Leave null until the
+# updated IEM Plug-in Suite (VST3/AU build) is installed -- the audio engine
+# falls back to a passthrough decoder with a warning until this is set.
+plugin_path: null
+
+# Path to a saved AllRADecoder loudspeaker-layout/decoder configuration to
+# load into the plugin on startup (e.g. an exported .vstpreset or the
+# plugin's own config export). Leave null as a placeholder for now.
+plugin_preset_path: null
+
+# Number of loudspeaker output channels to render. Leave null to use the
+# selected output device's channel count. Set explicitly once the real
+# AllRADecoder configuration/loudspeaker array is known.
+num_output_channels: null
+
+sample_rate: 48000
+block_size: 512
