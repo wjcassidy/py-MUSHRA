@@ -35,6 +35,7 @@
   align-items: stretch;
   gap: 32px;
   padding: 48px 24px;
+  transform: translateY(-30px);
 }
 
 .test-area__heading {
