@@ -1,4 +1,9 @@
-export default function FamiliarisationPage({ stimuli, selected, playing, onSelect, onContinue }) {
+import { useState } from 'react'
+
+export default function FamiliarisationPage({ stimuli, selected, playing, played, onSelect, onContinue }) {
+  const [hoveringContinue, setHoveringContinue] = useState(false)
+  const allPlayed = stimuli.length > 0 && stimuli.every((filename) => played.has(filename))
+
   return (
     <div className="familiarisation-page">
       <h1 className="familiarisation-page__title">Familiarisation</h1>
@@ -7,19 +12,26 @@ export default function FamiliarisationPage({ stimuli, selected, playing, onSele
           <button
             key={filename}
             type="button"
-            title={filename}
+            aria-label={filename}
             className={`familiarisation-button${
               selected === filename && playing ? ' familiarisation-button--active' : ''
-            }`}
+            }${played.has(filename) ? ' familiarisation-button--played' : ''}`}
             onClick={() => onSelect(filename)}
-          >
-            {filename.replace(/\.wav$/i, '')}
-          </button>
+          />
         ))}
       </div>
-      <button type="button" className="primary-button" onClick={onContinue}>
-        Start test
-      </button>
+      <div
+        className="primary-button-wrap"
+        onMouseEnter={() => setHoveringContinue(true)}
+        onMouseLeave={() => setHoveringContinue(false)}
+      >
+        <button type="button" className="primary-button" disabled={!allPlayed} onClick={onContinue}>
+          Start test
+        </button>
+        {hoveringContinue && !allPlayed && (
+          <div className="primary-button-message">Please listen to all examples before proceeding.</div>
+        )}
+      </div>
     </div>
   )
 }

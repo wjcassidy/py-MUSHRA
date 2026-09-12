@@ -34,6 +34,31 @@
   opacity: 0.9;
 }
 
+.primary-button:disabled {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primary-button-wrap {
+  position: relative;
+}
+
+.primary-button-message {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 220px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+  text-align: center;
+}
+
 .familiarisation-page {
   display: flex;
   flex-direction: column;
@@ -41,7 +66,6 @@
   justify-content: center;
   min-height: 100vh;
   gap: 40px;
-  padding: 48px 24px;
 }
 
 .familiarisation-page__title {
@@ -63,24 +87,20 @@
   border-radius: 10px;
   border: 2px solid var(--border);
   background: var(--surface);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
-  padding: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .familiarisation-button:hover {
   border-color: var(--text-dim);
 }
 
+.familiarisation-button--played {
+  border-color: #3ddc97;
+}
+
 .familiarisation-button--active {
   border-color: var(--accent);
   background: var(--accent);
-  color: #fff;
 }
 
 .top-bar {

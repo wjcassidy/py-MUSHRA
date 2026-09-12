@@ -29,6 +29,7 @@ export default function App() {
   const [familiarisationStimuli, setFamiliarisationStimuli] = useState([])
   const [familiarisationSelected, setFamiliarisationSelected] = useState(null)
   const [familiarisationPlaying, setFamiliarisationPlaying] = useState(false)
+  const [familiarisationPlayed, setFamiliarisationPlayed] = useState(() => new Set())
 
   useEffect(() => {
     api
@@ -125,6 +126,7 @@ export default function App() {
       .then(() => {
         setFamiliarisationSelected(filename)
         setFamiliarisationPlaying(true)
+        setFamiliarisationPlayed((played) => new Set(played).add(filename))
       })
       .catch((err) => setError(err.message))
   }
@@ -153,6 +155,7 @@ export default function App() {
         stimuli={familiarisationStimuli}
         selected={familiarisationSelected}
         playing={familiarisationPlaying}
+        played={familiarisationPlayed}
         onSelect={handleFamiliarisationSelect}
         onContinue={handleFamiliarisationContinue}
       />

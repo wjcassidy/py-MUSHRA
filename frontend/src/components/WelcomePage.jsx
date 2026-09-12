@@ -1,10 +1,9 @@
 export default function WelcomePage({ onStart }) {
   return (
     <div className="status-screen">
-      <h1>Welcome</h1>
-      <p>You are about to begin a listening test.</p>
+      <h1>Active Acoustics Listening Test</h1>
       <button type="button" className="primary-button" onClick={onStart}>
-        Start
+        Begin
       </button>
     </div>
   )
