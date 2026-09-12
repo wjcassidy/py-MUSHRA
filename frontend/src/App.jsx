@@ -119,45 +119,47 @@ export default function App() {
   return (
     <div className="app">
       <header className="top-bar">
-        <div className="top-bar__row">
-          <div className="top-bar__left">
-            <DeviceSelector devices={devices} selectedIndex={deviceIndex} onChange={handleDeviceChange} />
-          </div>
-          <h1 className="top-bar__heading">Rate the similarity of each stimulus to the reference</h1>
-          <div className="top-bar__right" />
-        </div>
-        <div className="top-bar__progress-row">
-          <ProgressBar current={page.page_index + 1} total={page.total_pages} />
-        </div>
+        <DeviceSelector devices={devices} selectedIndex={deviceIndex} onChange={handleDeviceChange} />
       </header>
       <main className="test-area">
-        <div className="stimuli-row">
-          {page.letters.map((letter) => (
-            <div
-              key={letter}
-              className={`stimulus-column${letter === page.reference_letter ? ' stimulus-column--reference' : ''}`}
-            >
-              <StimulusButton letter={letter} active={selectedLetter === letter} onClick={handleSelect} />
-              {letter !== page.reference_letter && (
-                <RatingSlider
-                  value={ratings[letter] ?? 50}
-                  touched={!!touched[letter]}
+        <h1 className="test-area__heading">Rate the similarity of each stimulus to the reference</h1>
+        <div className="test-area__content">
+          <div className="stimuli-row">
+            {page.letters.map((letter) => (
+              <div
+                key={letter}
+                className={`stimulus-column${letter === page.reference_letter ? ' stimulus-column--reference' : ''}`}
+              >
+                <StimulusButton
+                  letter={letter}
+                  label={letter === page.reference_letter ? 'Reference' : letter}
                   active={selectedLetter === letter}
-                  onChange={(value) => handleSliderChange(letter, value)}
-                  onActivate={() => handleSelect(letter)}
+                  onClick={handleSelect}
                 />
-              )}
-            </div>
-          ))}
+                {letter !== page.reference_letter && (
+                  <RatingSlider
+                    value={ratings[letter] ?? 50}
+                    touched={!!touched[letter]}
+                    active={selectedLetter === letter}
+                    onChange={(value) => handleSliderChange(letter, value)}
+                    onActivate={() => handleSelect(letter)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <TransportControls
+            isPlaying={isPlaying}
+            disabled={!selectedLetter}
+            onToggle={handleToggle}
+            nextDisabled={!allTouched}
+            onNext={handleNext}
+          />
         </div>
-        <TransportControls
-          isPlaying={isPlaying}
-          disabled={!selectedLetter}
-          onToggle={handleToggle}
-          nextDisabled={!allTouched}
-          onNext={handleNext}
-        />
       </main>
+      <footer className="bottom-bar">
+        <ProgressBar current={page.page_index + 1} total={page.total_pages} />
+      </footer>
     </div>
   )
 }
