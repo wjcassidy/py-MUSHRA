@@ -133,7 +133,7 @@ export default function App() {
                 <StimulusButton
                   letter={letter}
                   label={letter === page.reference_letter ? 'Reference' : letter}
-                  active={selectedLetter === letter}
+                  active={selectedLetter === letter && isPlaying}
                   onClick={handleSelect}
                 />
                 {letter !== page.reference_letter && (
