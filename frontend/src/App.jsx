@@ -139,8 +139,9 @@ export default function App() {
                 <RatingSlider
                   value={ratings[letter] ?? 50}
                   touched={!!touched[letter]}
-                  disabled={selectedLetter !== letter}
+                  active={selectedLetter === letter}
                   onChange={(value) => handleSliderChange(letter, value)}
+                  onActivate={() => handleSelect(letter)}
                 />
               )}
             </div>

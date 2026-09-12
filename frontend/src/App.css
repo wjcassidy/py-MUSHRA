@@ -142,9 +142,8 @@
   overflow: hidden;
 }
 
-.rating-slider--disabled .rating-slider__track {
-  cursor: not-allowed;
-  opacity: 0.45;
+.rating-slider--active .rating-slider__track {
+  border-color: var(--accent);
 }
 
 .rating-slider__fill {

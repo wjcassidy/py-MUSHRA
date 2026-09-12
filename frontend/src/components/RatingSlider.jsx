@@ -2,14 +2,14 @@ import { useRef } from 'react'
 
 const BANDS = ['Excellent', 'Good', 'Fair', 'Poor', 'Bad']
 
-export default function RatingSlider({ value, touched, disabled, onChange }) {
+export default function RatingSlider({ value, touched, active, onChange, onActivate }) {
   const trackRef = useRef(null)
   const dragRef = useRef(null)
 
   function handlePointerDown(e) {
-    if (disabled) return
     const track = trackRef.current
     if (!track) return
+    if (!active) onActivate()
     track.setPointerCapture(e.pointerId)
     // Drag is relative to the thumb's current position -- clicking the track
     // never jumps the value to the click point.
@@ -21,7 +21,7 @@ export default function RatingSlider({ value, touched, disabled, onChange }) {
   }
 
   function handlePointerMove(e) {
-    if (disabled || !dragRef.current) return
+    if (!dragRef.current) return
     const { startY, startValue, height } = dragRef.current
     const deltaValue = ((startY - e.clientY) / height) * 100
     const next = Math.min(100, Math.max(0, startValue + deltaValue))
@@ -36,7 +36,7 @@ export default function RatingSlider({ value, touched, disabled, onChange }) {
   }
 
   return (
-    <div className={`rating-slider${disabled ? ' rating-slider--disabled' : ''}`}>
+    <div className={`rating-slider${active ? ' rating-slider--active' : ''}`}>
       <div className="rating-slider__bands">
         {BANDS.map((label) => (
           <div key={label} className="rating-slider__band">
