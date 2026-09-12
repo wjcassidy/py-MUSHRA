@@ -133,7 +133,10 @@ export default function App() {
       <main className="test-area">
         <div className="stimuli-row">
           {page.letters.map((letter) => (
-            <div key={letter} className="stimulus-column">
+            <div
+              key={letter}
+              className={`stimulus-column${letter === page.reference_letter ? ' stimulus-column--reference' : ''}`}
+            >
               <StimulusButton letter={letter} active={selectedLetter === letter} onClick={handleSelect} />
               {letter !== page.reference_letter && (
                 <RatingSlider

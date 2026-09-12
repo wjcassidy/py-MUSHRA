@@ -75,8 +75,23 @@
 .stimulus-column {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 20px;
+}
+
+.stimulus-column--reference {
+  align-items: center;
+}
+
+.stimulus-column .stimulus-button {
+  /* Center the button over the slider track, offset past the fixed-width
+     scale label column (and the gap after it) so the two stay aligned
+     regardless of label text width. */
+  margin-left: calc(64px + 8px + (40px - 56px) / 2);
+}
+
+.stimulus-column--reference .stimulus-button {
+  margin-left: 0;
 }
 
 .stimulus-button {
@@ -110,6 +125,7 @@
 .rating-slider__bands {
   display: flex;
   flex-direction: column;
+  width: 64px;
   height: 200px;
   margin-top: 10px;
   text-align: right;
