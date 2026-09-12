@@ -5,6 +5,7 @@ import RatingSlider from './components/RatingSlider'
 import TransportControls from './components/TransportControls'
 import ProgressBar from './components/ProgressBar'
 import DeviceSelector from './components/DeviceSelector'
+import ReorderButton from './components/ReorderButton'
 import './App.css'
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [ratings, setRatings] = useState({})
   const [touched, setTouched] = useState({})
+  const [letterOrder, setLetterOrder] = useState(null)
 
   const [devices, setDevices] = useState([])
   const [deviceIndex, setDeviceIndex] = useState(null)
@@ -43,6 +45,7 @@ export default function App() {
     setIsPlaying(false)
     setRatings({})
     setTouched({})
+    setLetterOrder(null)
   }
 
   function handleSelect(letter) {
@@ -67,6 +70,10 @@ export default function App() {
   function handleSliderChange(letter, value) {
     setRatings((r) => ({ ...r, [letter]: value }))
     setTouched((t) => ({ ...t, [letter]: true }))
+  }
+
+  function handleReorder() {
+    setLetterOrder([...evalLetters].sort((a, b) => (ratings[a] ?? 50) - (ratings[b] ?? 50)))
   }
 
   function handleNext() {
@@ -114,6 +121,7 @@ export default function App() {
   }
 
   const evalLetters = page.letters.filter((l) => l !== page.reference_letter)
+  const displayLetters = letterOrder ?? evalLetters
   const allTouched = evalLetters.length > 0 && evalLetters.every((l) => touched[l])
 
   return (
@@ -133,7 +141,7 @@ export default function App() {
             />
           </div>
           <div className="stimuli-row">
-            {evalLetters.map((letter) => (
+            {displayLetters.map((letter) => (
               <div key={letter} className="stimulus-column">
                 <StimulusButton
                   letter={letter}
@@ -150,13 +158,16 @@ export default function App() {
               </div>
             ))}
           </div>
-          <TransportControls
-            isPlaying={isPlaying}
-            disabled={!selectedLetter}
-            onToggle={handleToggle}
-            nextDisabled={!allTouched}
-            onNext={handleNext}
-          />
+          <div className="test-area__right">
+            <ReorderButton onClick={handleReorder} disabled={evalLetters.length < 2} />
+            <TransportControls
+              isPlaying={isPlaying}
+              disabled={!selectedLetter}
+              onToggle={handleToggle}
+              nextDisabled={!allTouched}
+              onNext={handleNext}
+            />
+          </div>
         </div>
       </main>
       <footer className="bottom-bar">

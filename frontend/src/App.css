@@ -47,7 +47,14 @@
 
 .test-area__content {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  /* minmax(0, 1fr) rather than plain 1fr -- the two side columns hold
+     different content (the reference button vs. the reorder + transport
+     controls) with different natural widths. A plain 1fr lets a column's
+     own content inflate its share of the space, which would pull the
+     middle (sliders) column off-center; minmax(0, ...) forces both side
+     columns to split the remaining space exactly evenly regardless of
+     what they contain. */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: start;
 }
 
@@ -57,11 +64,14 @@
   margin-right: 28px;
 }
 
-.test-area__content .side-controls {
+.test-area__right {
   grid-column: 3;
   justify-self: start;
   align-self: center;
-  margin-left: 48px;
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  margin-left: 28px;
 }
 
 .bottom-bar {
@@ -126,6 +136,29 @@
   padding: 0 14px;
   font-size: 14px;
   white-space: nowrap;
+}
+
+.reorder-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.reorder-button:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.reorder-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .stimulus-button:hover {
