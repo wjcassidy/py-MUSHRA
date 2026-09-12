@@ -13,6 +13,7 @@ from backend.config import Config
 logger = logging.getLogger("py_mushra.audio_engine")
 
 CROSSFADE_SECONDS = 0.05
+PAUSE_FADE_SECONDS = 0.05
 
 _INT_MAX = {
     np.dtype("int16"): 2**15,
@@ -58,6 +59,11 @@ class AudioEngine:
         self.crossfade_from: Path | None = None
         self.crossfade_total = 0
         self.crossfade_done = 0
+
+        # Output gain envelope -- ramped (never stepped) toward _gain_target so
+        # play/pause and stimulus toggles fade instead of clicking.
+        self._gain = 0.0
+        self._gain_target = 0.0
 
         self.device_index: int | None = None
         self.stream: sd.OutputStream | None = None
@@ -190,6 +196,8 @@ class AudioEngine:
             self._carry = np.zeros((0, 0), dtype=np.float32)
             self.crossfade_from = None
             self.crossfade_done = 0
+            self._gain = 0.0
+            self._gain_target = 0.0
 
     def select(self, path: Path) -> None:
         self._load_stimulus(path)  # populate cache outside the lock-held callback path
@@ -200,6 +208,7 @@ class AudioEngine:
             previous = self.current_path
             self.current_path = path
             self.playing = True
+            self._gain_target = 1.0
             if previous is not None and previous != path:
                 # Crossfade in the Ambisonic domain so a single plugin instance/state
                 # handles the (already-blended) signal -- avoids double-decoding.
@@ -213,10 +222,13 @@ class AudioEngine:
     def play(self) -> None:
         with self._lock:
             self.playing = True
+            self._gain_target = 1.0
 
     def pause(self) -> None:
         with self._lock:
-            self.playing = False
+            # Don't cut self.playing immediately -- the callback keeps decoding
+            # and fades _gain down to 0 first, then settles playing to False.
+            self._gain_target = 0.0
 
     # -- realtime callback ----------------------------------------------------
 
@@ -239,8 +251,20 @@ class AudioEngine:
                 return
 
             num_source_channels = self._stimulus_cache[self.current_path].shape[0]
+            fade_samples = max(1, int(round(PAUSE_FADE_SECONDS * self.sample_rate)))
+            gain_step = 1.0 / fade_samples
 
             while self._carry.shape[1] < frames:
+                if not self.playing:
+                    # Fully faded out and settled -- pad the rest of this callback
+                    # with silence instead of continuing to decode/advance.
+                    remaining = frames - self._carry.shape[1]
+                    pad = np.zeros((self.num_output_channels, remaining), dtype=np.float32)
+                    self._carry = pad if self._carry.shape[1] == 0 else np.concatenate(
+                        [self._carry, pad], axis=1
+                    )
+                    break
+
                 length = self.block_size
                 chunk = self._read_chunk(self.current_path, self.playhead, length)
 
@@ -271,6 +295,21 @@ class AudioEngine:
                     processed = np.zeros((self.num_output_channels, chunk.shape[1]), dtype=np.float32)
                     processed[:n] = chunk[:n]
                 self._pending_reset = False
+
+                if self._gain != self._gain_target:
+                    direction = 1.0 if self._gain_target > self._gain else -1.0
+                    ramp = self._gain + direction * gain_step * np.arange(1, length + 1, dtype=np.float32)
+                    ramp = np.clip(ramp, 0.0, 1.0)
+                    ramp = np.minimum(ramp, self._gain_target) if direction > 0 else np.maximum(
+                        ramp, self._gain_target
+                    )
+                    self._gain = float(ramp[-1])
+                else:
+                    ramp = np.full(length, self._gain, dtype=np.float32)
+                processed = processed * ramp[np.newaxis, :]
+
+                if self._gain == 0.0 and self._gain_target == 0.0:
+                    self.playing = False
 
                 self._carry = (
                     processed
