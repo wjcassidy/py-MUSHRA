@@ -19,6 +19,70 @@
   color: #ff6b6b;
 }
 
+.primary-button {
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 2px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.primary-button:hover {
+  opacity: 0.9;
+}
+
+.familiarisation-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 40px;
+  padding: 48px 24px;
+}
+
+.familiarisation-page__title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.familiarisation-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 88px);
+  gap: 20px;
+  justify-content: center;
+}
+
+.familiarisation-button {
+  width: 88px;
+  height: 88px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.familiarisation-button:hover {
+  border-color: var(--text-dim);
+}
+
+.familiarisation-button--active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
 .top-bar {
   display: flex;
   align-items: center;
@@ -271,6 +335,27 @@
 .next-button:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.next-button-wrap {
+  position: relative;
+}
+
+.next-button-wrap .next-button {
+  width: 100%;
+}
+
+.next-button-message {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 200px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+  text-align: center;
 }
 
 .progress-bar {

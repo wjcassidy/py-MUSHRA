@@ -4,6 +4,11 @@
 # MUSHRA page/item. The suffix "target" marks the true reference for that item.
 stimuli_dir: demo_stimuli
 
+# Folder of stimuli played on the familiarisation page (any .wav files --
+# they do not need to follow the "<prefix>_<suffix>.wav" convention above).
+# Using the demo stimuli for now until real familiarisation stimuli are added.
+familiarisation_dir: demo_stimuli
+
 # Where timestamped result CSVs are written.
 results_dir: results
 

@@ -24,6 +24,7 @@ app.add_middleware(
 
 app.state.session = None
 app.state.engine = None
+app.state.config = None
 app.state.startup_error = None
 
 
@@ -37,6 +38,7 @@ def startup() -> None:
         engine.reset_page()
         app.state.session = session
         app.state.engine = engine
+        app.state.config = config
     except StimuliError as exc:
         logger.error("Stimuli setup error: %s", exc)
         app.state.startup_error = str(exc)
@@ -57,6 +59,12 @@ def _engine() -> AudioEngine:
     return app.state.engine
 
 
+def _config() -> Config:
+    if app.state.startup_error:
+        raise HTTPException(status_code=503, detail=app.state.startup_error)
+    return app.state.config
+
+
 class SelectRequest(BaseModel):
     letter: str
 
@@ -67,6 +75,10 @@ class DeviceRequest(BaseModel):
 
 class RatingsRequest(BaseModel):
     ratings: dict[str, float]
+
+
+class FamiliarisationSelectRequest(BaseModel):
+    filename: str
 
 
 @app.get("/api/session")
@@ -108,6 +120,26 @@ def audio_devices():
 @app.post("/api/audio-device")
 def set_audio_device(body: DeviceRequest):
     _engine().set_output_device(body.index)
+    return {"ok": True}
+
+
+@app.get("/api/familiarisation-stimuli")
+def familiarisation_stimuli():
+    config = _config()
+    return {"stimuli": sorted(p.name for p in config.familiarisation_dir.glob("*.wav"))}
+
+
+@app.post("/api/familiarisation-select")
+def familiarisation_select(body: FamiliarisationSelectRequest):
+    config = _config()
+    engine = _engine()
+    familiarisation_dir = config.familiarisation_dir.resolve()
+    path = (familiarisation_dir / body.filename).resolve()
+    if path.parent != familiarisation_dir or not path.is_file():
+        raise HTTPException(
+            status_code=400, detail=f"Unknown familiarisation stimulus '{body.filename}'"
+        )
+    engine.select(path)
     return {"ok": True}
 
 

@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 @dataclass
 class Config:
     stimuli_dir: Path
+    familiarisation_dir: Path
     results_dir: Path
     plugin_path: Path | None
     plugin_preset_path: Path | None
@@ -30,6 +31,7 @@ class Config:
 
         return cls(
             stimuli_dir=resolve(raw["stimuli_dir"]),
+            familiarisation_dir=resolve(raw.get("familiarisation_dir")) or resolve(raw["stimuli_dir"]),
             results_dir=resolve(raw["results_dir"]),
             plugin_path=resolve(raw.get("plugin_path")),
             plugin_preset_path=resolve(raw.get("plugin_preset_path")),

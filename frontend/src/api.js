@@ -20,4 +20,7 @@ export const api = {
   getDevices: () => request('/audio-devices'),
   setDevice: (index) => request('/audio-device', { method: 'POST', body: JSON.stringify({ index }) }),
   submitRatings: (ratings) => request('/ratings', { method: 'POST', body: JSON.stringify({ ratings }) }),
+  getFamiliarisationStimuli: () => request('/familiarisation-stimuli'),
+  selectFamiliarisation: (filename) =>
+    request('/familiarisation-select', { method: 'POST', body: JSON.stringify({ filename }) }),
 }

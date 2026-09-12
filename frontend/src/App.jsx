@@ -6,9 +6,13 @@ import TransportControls from './components/TransportControls'
 import ProgressBar from './components/ProgressBar'
 import DeviceSelector from './components/DeviceSelector'
 import ReorderButton from './components/ReorderButton'
+import WelcomePage from './components/WelcomePage'
+import FamiliarisationPage from './components/FamiliarisationPage'
 import './App.css'
 
 export default function App() {
+  const [stage, setStage] = useState('welcome')
+
   const [page, setPage] = useState(null)
   const [completed, setCompleted] = useState(null)
   const [error, setError] = useState(null)
@@ -21,6 +25,10 @@ export default function App() {
 
   const [devices, setDevices] = useState([])
   const [deviceIndex, setDeviceIndex] = useState(null)
+
+  const [familiarisationStimuli, setFamiliarisationStimuli] = useState([])
+  const [familiarisationSelected, setFamiliarisationSelected] = useState(null)
+  const [familiarisationPlaying, setFamiliarisationPlaying] = useState(false)
 
   useEffect(() => {
     api
@@ -37,6 +45,11 @@ export default function App() {
     api
       .getDevices()
       .then((data) => setDevices(data.devices))
+      .catch((err) => setError(err.message))
+
+    api
+      .getFamiliarisationStimuli()
+      .then((data) => setFamiliarisationStimuli(data.stimuli))
       .catch((err) => setError(err.message))
   }, [])
 
@@ -99,8 +112,51 @@ export default function App() {
       .catch((err) => setError(err.message))
   }
 
+  function handleFamiliarisationSelect(filename) {
+    if (filename === familiarisationSelected && familiarisationPlaying) {
+      api
+        .pause()
+        .then(() => setFamiliarisationPlaying(false))
+        .catch((err) => setError(err.message))
+      return
+    }
+    api
+      .selectFamiliarisation(filename)
+      .then(() => {
+        setFamiliarisationSelected(filename)
+        setFamiliarisationPlaying(true)
+      })
+      .catch((err) => setError(err.message))
+  }
+
+  function handleFamiliarisationContinue() {
+    api
+      .pause()
+      .then(() => {
+        setFamiliarisationPlaying(false)
+        setStage('test')
+      })
+      .catch((err) => setError(err.message))
+  }
+
   if (error) {
     return <div className="status-screen status-screen--error">Error: {error}</div>
+  }
+
+  if (stage === 'welcome') {
+    return <WelcomePage onStart={() => setStage('familiarisation')} />
+  }
+
+  if (stage === 'familiarisation') {
+    return (
+      <FamiliarisationPage
+        stimuli={familiarisationStimuli}
+        selected={familiarisationSelected}
+        playing={familiarisationPlaying}
+        onSelect={handleFamiliarisationSelect}
+        onContinue={handleFamiliarisationContinue}
+      />
+    )
   }
 
   if (completed) {
@@ -123,6 +179,11 @@ export default function App() {
   const evalLetters = page.letters.filter((l) => l !== page.reference_letter)
   const displayLetters = letterOrder ?? evalLetters
   const allTouched = evalLetters.length > 0 && evalLetters.every((l) => touched[l])
+  const hasTopRating = evalLetters.some((l) => ratings[l] === 100)
+  const nextDisabled = !allTouched || !hasTopRating
+  const nextReasons = []
+  if (!allTouched) nextReasons.push('Please adjust every slider.\n')
+  if (!hasTopRating) nextReasons.push('Rate at least one stimulus at 100.')
 
   return (
     <div className="app">
@@ -164,7 +225,8 @@ export default function App() {
               isPlaying={isPlaying}
               disabled={!selectedLetter}
               onToggle={handleToggle}
-              nextDisabled={!allTouched}
+              nextDisabled={nextDisabled}
+              nextReasons={nextReasons}
               onNext={handleNext}
             />
           </div>
