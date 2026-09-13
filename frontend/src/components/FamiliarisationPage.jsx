@@ -6,7 +6,10 @@ export default function FamiliarisationPage({ stimuli, selected, playing, played
 
   return (
     <div className="familiarisation-page">
-      <h1 className="familiarisation-page__title">Familiarisation</h1>
+        <div className="familiarisation-text">
+            <h1 className="familiarisation-page__title">Familiarisation</h1>
+            <p className="familiarisation-page__subtitle">Please listen to each of the below examples.</p>
+        </div>
       <div className="familiarisation-grid">
         {stimuli.map((filename) => (
           <button
