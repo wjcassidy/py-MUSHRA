@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from backend.audio_engine import AudioEngine
+from backend.audio_engine import AudioDeviceError, AudioEngine
 from backend.config import Config
 from backend.session import REFERENCE_LETTER, Session, StimuliError
 
@@ -114,13 +114,21 @@ def pause():
 
 @app.get("/api/audio-devices")
 def audio_devices():
-    return {"devices": _engine().list_output_devices()}
+    engine = _engine()
+    return {
+        "devices": engine.list_output_devices(),
+        **engine.channel_status(),
+    }
 
 
 @app.post("/api/audio-device")
 def set_audio_device(body: DeviceRequest):
-    _engine().set_output_device(body.index)
-    return {"ok": True}
+    engine = _engine()
+    try:
+        engine.set_output_device(body.index)
+    except AudioDeviceError:
+        pass  # engine.channel_status() below reports the resulting device_error
+    return {"ok": engine.device_error is None, **engine.channel_status()}
 
 
 @app.get("/api/familiarisation-stimuli")
@@ -140,6 +148,15 @@ def familiarisation_select(body: FamiliarisationSelectRequest):
             status_code=400, detail=f"Unknown familiarisation stimulus '{body.filename}'"
         )
     engine.select(path)
+    return {"ok": True}
+
+
+@app.post("/api/familiarisation-finish")
+def familiarisation_finish():
+    # Familiarisation and the main test share engine.select(), which can leave a
+    # crossfade queued from the last familiarisation clip into the first real
+    # stimulus -- clear that transport state before the test's own audio begins.
+    _engine().reset_page()
     return {"ok": True}
 
 

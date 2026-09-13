@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from './api'
 import StimulusButton from './components/StimulusButton'
 import RatingSlider from './components/RatingSlider'
@@ -25,6 +25,8 @@ export default function App() {
 
   const [devices, setDevices] = useState([])
   const [deviceIndex, setDeviceIndex] = useState(null)
+  const [channelStatus, setChannelStatus] = useState(null)
+  const deviceRequestId = useRef(0)
 
   const [familiarisationStimuli, setFamiliarisationStimuli] = useState([])
   const [familiarisationSelected, setFamiliarisationSelected] = useState(null)
@@ -45,7 +47,10 @@ export default function App() {
 
     api
       .getDevices()
-      .then((data) => setDevices(data.devices))
+      .then((data) => {
+        setDevices(data.devices)
+        setChannelStatus(data)
+      })
       .catch((err) => setError(err.message))
 
     api
@@ -107,10 +112,20 @@ export default function App() {
   }
 
   function handleDeviceChange(index) {
+    const requestId = ++deviceRequestId.current
     api
       .setDevice(index)
-      .then(() => setDeviceIndex(index))
-      .catch((err) => setError(err.message))
+      .then((data) => {
+        if (requestId !== deviceRequestId.current) return // superseded by a later device change
+        setChannelStatus(data)
+        if (!data.error) {
+          setDeviceIndex(index)
+        }
+      })
+      .catch((err) => {
+        if (requestId !== deviceRequestId.current) return
+        setError(err.message)
+      })
   }
 
   function handleFamiliarisationSelect(filename) {
@@ -134,6 +149,7 @@ export default function App() {
   function handleFamiliarisationContinue() {
     api
       .pause()
+      .then(() => api.finishFamiliarisation())
       .then(() => {
         setFamiliarisationPlaying(false)
         setStage('test')
@@ -141,42 +157,74 @@ export default function App() {
       .catch((err) => setError(err.message))
   }
 
+  const deviceSelectorBar = (
+    <header className="top-bar">
+      <DeviceSelector
+        devices={devices}
+        selectedIndex={deviceIndex}
+        onChange={handleDeviceChange}
+        channelStatus={channelStatus}
+      />
+    </header>
+  )
+
   if (error) {
-    return <div className="status-screen status-screen--error">Error: {error}</div>
+    return (
+      <div className="app">
+        {deviceSelectorBar}
+        <div className="status-screen status-screen--error">Error: {error}</div>
+      </div>
+    )
   }
 
   if (stage === 'welcome') {
-    return <WelcomePage onStart={() => setStage('familiarisation')} />
+    return (
+      <div className="app">
+        {deviceSelectorBar}
+        <WelcomePage onStart={() => setStage('familiarisation')} />
+      </div>
+    )
   }
 
   if (stage === 'familiarisation') {
     return (
-      <FamiliarisationPage
-        stimuli={familiarisationStimuli}
-        selected={familiarisationSelected}
-        playing={familiarisationPlaying}
-        played={familiarisationPlayed}
-        onSelect={handleFamiliarisationSelect}
-        onContinue={handleFamiliarisationContinue}
-      />
+      <div className="app">
+        {deviceSelectorBar}
+        <FamiliarisationPage
+          stimuli={familiarisationStimuli}
+          selected={familiarisationSelected}
+          playing={familiarisationPlaying}
+          played={familiarisationPlayed}
+          onSelect={handleFamiliarisationSelect}
+          onContinue={handleFamiliarisationContinue}
+        />
+      </div>
     )
   }
 
   if (completed) {
     return (
-      <div className="status-screen">
-        <h1>Test complete</h1>
-        {completed.csvFilename ? (
-          <p>Results saved to results/{completed.csvFilename}</p>
-        ) : (
-          <p>This test session has already been completed.</p>
-        )}
+      <div className="app">
+        {deviceSelectorBar}
+        <div className="status-screen">
+          <h1>Test complete</h1>
+          {completed.csvFilename ? (
+            <p>Results saved to results/{completed.csvFilename}</p>
+          ) : (
+            <p>This test session has already been completed.</p>
+          )}
+        </div>
       </div>
     )
   }
 
   if (!page) {
-    return <div className="status-screen">Loading…</div>
+    return (
+      <div className="app">
+        {deviceSelectorBar}
+        <div className="status-screen">Loading…</div>
+      </div>
+    )
   }
 
   const evalLetters = page.letters.filter((l) => l !== page.reference_letter)
@@ -190,9 +238,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="top-bar">
-        <DeviceSelector devices={devices} selectedIndex={deviceIndex} onChange={handleDeviceChange} />
-      </header>
+      {deviceSelectorBar}
       <main className="test-area">
         <h1 className="test-area__heading">Rate the similarity of each excerpt to the reference</h1>
         <div className="test-area__content">

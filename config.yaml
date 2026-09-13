@@ -2,7 +2,7 @@
 
 # Folder of "<prefix>_<suffix>.wav" stimuli. Files sharing a prefix form one
 # MUSHRA page/item. The suffix "target" marks the true reference for that item.
-stimuli_dir: demo_stimuli
+stimuli_dir: stimuli
 
 # Folder of stimuli played on the familiarisation page (any .wav files --
 # they do not need to follow the "<prefix>_<suffix>.wav" convention above).
@@ -16,17 +16,23 @@ results_dir: results
 # e.g. "/Library/Audio/Plug-Ins/VST3/AllRADecoder.vst3". Leave null until the
 # updated IEM Plug-in Suite (VST3/AU build) is installed -- the audio engine
 # falls back to a passthrough decoder with a warning until this is set.
-plugin_path: null
+plugin_path: /Library/Audio/Plug-Ins/VST3/IEM/AllRADecoder.vst3
 
 # Path to a saved AllRADecoder loudspeaker-layout/decoder configuration to
 # load into the plugin on startup (e.g. an exported .vstpreset or the
 # plugin's own config export). Leave null as a placeholder for now.
-plugin_preset_path: null
+plugin_preset_path: TB7_AllRADecoder_Layout.vstpreset
 
-# Number of loudspeaker output channels to render. Leave null to use the
-# selected output device's channel count. Set explicitly once the real
-# AllRADecoder configuration/loudspeaker array is known.
-num_output_channels: null
+# The plugin's exact input (Ambisonic channel count) and output (loudspeaker
+# count) bus sizes, as declared by the loaded preset. Both are required
+# whenever plugin_path is set -- dawdreamer needs the plugin's precise bus
+# size upfront (it cannot be auto-detected from the stimulus files or by
+# probing, since the two channel counts differ for a decoder). Check the
+# preset's own loudspeaker layout to get these numbers right; for
+# TB7_AllRADecoder_Layout (a 4th order Ambisonics decoder over 22
+# loudspeakers), that's 25 in / 22 out.
+num_input_channels: 25
+num_output_channels: 22
 
 sample_rate: 48000
 block_size: 512

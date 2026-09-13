@@ -23,4 +23,5 @@ export const api = {
   getFamiliarisationStimuli: () => request('/familiarisation-stimuli'),
   selectFamiliarisation: (filename) =>
     request('/familiarisation-select', { method: 'POST', body: JSON.stringify({ filename }) }),
+  finishFamiliarisation: () => request('/familiarisation-finish', { method: 'POST' }),
 }
