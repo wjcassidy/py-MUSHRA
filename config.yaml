@@ -21,7 +21,7 @@ plugin_path: /Library/Audio/Plug-Ins/VST3/IEM/AllRADecoder.vst3
 # Path to a saved AllRADecoder loudspeaker-layout/decoder configuration to
 # load into the plugin on startup (e.g. an exported .vstpreset or the
 # plugin's own config export). Leave null as a placeholder for now.
-plugin_preset_path: TB7_AllRADecoder_Layout.vstpreset
+plugin_preset_path: AAC_AllRADecoder_MinusHRTFRig.vstpreset
 
 # The plugin's exact input (Ambisonic channel count) and output (loudspeaker
 # count) bus sizes, as declared by the loaded preset. Both are required
