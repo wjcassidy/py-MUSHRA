@@ -5,6 +5,7 @@ import RatingSlider from './components/RatingSlider'
 import TransportControls from './components/TransportControls'
 import ProgressBar from './components/ProgressBar'
 import DeviceSelector from './components/DeviceSelector'
+import VolumeControl from './components/VolumeControl'
 import ReorderButton from './components/ReorderButton'
 import WelcomePage from './components/WelcomePage'
 import FamiliarisationPage from './components/FamiliarisationPage'
@@ -27,6 +28,9 @@ export default function App() {
   const [deviceIndex, setDeviceIndex] = useState(null)
   const [channelStatus, setChannelStatus] = useState(null)
   const deviceRequestId = useRef(0)
+
+  const [volume, setVolume] = useState(null)
+  const volumeRequestId = useRef(0)
 
   const [familiarisationStimuli, setFamiliarisationStimuli] = useState([])
   const [familiarisationSelected, setFamiliarisationSelected] = useState(null)
@@ -51,6 +55,11 @@ export default function App() {
         setDevices(data.devices)
         setChannelStatus(data)
       })
+      .catch((err) => setError(err.message))
+
+    api
+      .getVolume()
+      .then(setVolume)
       .catch((err) => setError(err.message))
 
     api
@@ -128,6 +137,18 @@ export default function App() {
       })
   }
 
+  function handleVolumeChange(volumeDb) {
+    const requestId = ++volumeRequestId.current
+    setVolume((v) => ({ ...v, volume_db: volumeDb }))
+    api
+      .setVolume(volumeDb)
+      .then((data) => {
+        if (requestId !== volumeRequestId.current) return // superseded by a later volume change
+        setVolume(data)
+      })
+      .catch((err) => setError(err.message))
+  }
+
   function handleFamiliarisationSelect(filename) {
     if (filename === familiarisationSelected && familiarisationPlaying) {
       api
@@ -152,6 +173,7 @@ export default function App() {
       .then(() => api.finishFamiliarisation())
       .then(() => {
         setFamiliarisationPlaying(false)
+        setVolume((v) => v && { ...v, locked: true })
         setStage('test')
       })
       .catch((err) => setError(err.message))
@@ -165,6 +187,7 @@ export default function App() {
         onChange={handleDeviceChange}
         channelStatus={channelStatus}
       />
+      <VolumeControl volume={volume} onChange={handleVolumeChange} />
     </header>
   )
 
@@ -207,7 +230,7 @@ export default function App() {
       <div className="app">
         {deviceSelectorBar}
         <div className="status-screen">
-          <h1>Test complete</h1>
+          <h1>Test complete! Thank you for participating.</h1>
           {completed.csvFilename ? (
             <p>Results saved to results/{completed.csvFilename}</p>
           ) : (

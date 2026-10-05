@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from backend.audio_engine import AudioDeviceError, AudioEngine
+from backend.audio_engine import VOLUME_MAX_DB, VOLUME_MIN_DB, AudioDeviceError, AudioEngine
 from backend.config import Config
 from backend.session import REFERENCE_LETTER, Session, StimuliError
 
@@ -26,6 +26,9 @@ app.state.session = None
 app.state.engine = None
 app.state.config = None
 app.state.startup_error = None
+# Volume is fixed once familiarisation is finished, so every test page is heard
+# at the level the listener chose.
+app.state.volume_locked = False
 
 
 @app.on_event("startup")
@@ -81,6 +84,10 @@ class FamiliarisationSelectRequest(BaseModel):
     filename: str
 
 
+class VolumeRequest(BaseModel):
+    volume_db: float
+
+
 @app.get("/api/session")
 def get_session():
     session = _session()
@@ -131,6 +138,29 @@ def set_audio_device(body: DeviceRequest):
     return {"ok": engine.device_error is None, **engine.channel_status()}
 
 
+def _volume_state(engine: AudioEngine) -> dict:
+    return {
+        "volume_db": engine.volume_db,
+        "min_db": VOLUME_MIN_DB,
+        "max_db": VOLUME_MAX_DB,
+        "locked": app.state.volume_locked,
+    }
+
+
+@app.get("/api/volume")
+def get_volume():
+    return _volume_state(_engine())
+
+
+@app.post("/api/volume")
+def set_volume(body: VolumeRequest):
+    engine = _engine()
+    if app.state.volume_locked:
+        raise HTTPException(status_code=409, detail="Volume is locked once familiarisation is finished")
+    engine.set_volume_db(body.volume_db)
+    return _volume_state(engine)
+
+
 @app.get("/api/familiarisation-stimuli")
 def familiarisation_stimuli():
     config = _config()
@@ -157,6 +187,7 @@ def familiarisation_finish():
     # crossfade queued from the last familiarisation clip into the first real
     # stimulus -- clear that transport state before the test's own audio begins.
     _engine().reset_page()
+    app.state.volume_locked = True
     return {"ok": True}
 
 

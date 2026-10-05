@@ -23,5 +23,7 @@ export const api = {
   getFamiliarisationStimuli: () => request('/familiarisation-stimuli'),
   selectFamiliarisation: (filename) =>
     request('/familiarisation-select', { method: 'POST', body: JSON.stringify({ filename }) }),
+  getVolume: () => request('/volume'),
+  setVolume: (volumeDb) => request('/volume', { method: 'POST', body: JSON.stringify({ volume_db: volumeDb }) }),
   finishFamiliarisation: () => request('/familiarisation-finish', { method: 'POST' }),
 }

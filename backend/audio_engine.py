@@ -16,6 +16,11 @@ logger = logging.getLogger("py_mushra.audio_engine")
 CROSSFADE_SECONDS = 0.05
 PAUSE_FADE_SECONDS = 0.05
 
+# Listener-adjustable output volume range (dB), set before/during familiarisation.
+VOLUME_MIN_DB = -60.0
+VOLUME_MAX_DB = 0.0
+VOLUME_DEFAULT_DB = -20.0
+
 # PortAudio's PaErrorCode for "Invalid number of channels" -- not exposed publicly
 # by sounddevice, so we match on the numeric code from PortAudioError.args[1].
 _PA_INVALID_CHANNEL_COUNT = -9998
@@ -84,6 +89,12 @@ class AudioEngine:
         # play/pause and stimulus toggles fade instead of clicking.
         self._gain = 0.0
         self._gain_target = 0.0
+
+        # Listener volume (linear) -- _volume_applied trails _volume, ramped across
+        # each rendered block so slider drags don't zipper.
+        self.volume_db = VOLUME_DEFAULT_DB
+        self._volume = 10.0 ** (VOLUME_DEFAULT_DB / 20.0)
+        self._volume_applied = self._volume
 
         self.device_index: int | None = None
         self.stream: sd.OutputStream | None = None
@@ -404,6 +415,13 @@ class AudioEngine:
             # and fades _gain down to 0 first, then settles playing to False.
             self._gain_target = 0.0
 
+    def set_volume_db(self, volume_db: float) -> float:
+        volume_db = min(VOLUME_MAX_DB, max(VOLUME_MIN_DB, float(volume_db)))
+        with self._lock:
+            self.volume_db = volume_db
+            self._volume = 10.0 ** (volume_db / 20.0)
+        return volume_db
+
     # -- realtime callback ----------------------------------------------------
 
     def _read_chunk(self, path: Path, start_sample: int, length: int) -> np.ndarray:
@@ -505,7 +523,9 @@ class AudioEngine:
                     self._gain = float(ramp[-1])
                 else:
                     ramp = np.full(length, self._gain, dtype=np.float32)
-                processed = processed * ramp[np.newaxis, :]
+                volume_ramp = np.linspace(self._volume_applied, self._volume, length + 1, dtype=np.float32)[1:]
+                self._volume_applied = self._volume
+                processed = processed * (ramp * volume_ramp)[np.newaxis, :]
 
                 if self._gain == 0.0 and self._gain_target == 0.0:
                     self.playing = False
