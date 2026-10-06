@@ -151,6 +151,19 @@ class Session:
             "letters": [REFERENCE_LETTER] + page.eval_letters,
         }
 
+    def log_current_page(self) -> None:
+        if self.is_finished:
+            return
+        page = self.current_page
+        lines = [f"  {REFERENCE_LETTER}: {page.reference_path.name}"]
+        lines += [
+            f"  {letter}: {path.name}{' (hidden reference)' if hidden else ''}"
+            for letter, path, hidden in page.slots
+        ]
+        logger.info(
+            "Page %d/%d stimuli:\n%s", self.page_index + 1, self.total_pages, "\n".join(lines)
+        )
+
     def record_ratings(self, ratings: dict[str, float]) -> dict:
         page = self.current_page
         expected = set(page.eval_letters)

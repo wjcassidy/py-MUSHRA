@@ -230,9 +230,10 @@ export default function App() {
       <div className="app">
         {deviceSelectorBar}
         <div className="status-screen">
-          <h1>Test complete! Thank you for participating.</h1>
+          <h1>Test complete!</h1>
+          <h2>Thank you for participating.</h2>
           {completed.csvFilename ? (
-            <p>Results saved to results/{completed.csvFilename}</p>
+            <p>Results saved.</p>
           ) : (
             <p>This test session has already been completed.</p>
           )}

@@ -188,6 +188,7 @@ def familiarisation_finish():
     # stimulus -- clear that transport state before the test's own audio begins.
     _engine().reset_page()
     app.state.volume_locked = True
+    _session().log_current_page()
     return {"ok": True}
 
 
@@ -201,4 +202,5 @@ def submit_ratings(body: RatingsRequest):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     engine.reset_page()
+    session.log_current_page()
     return result
