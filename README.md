@@ -1,23 +1,28 @@
 # py-MUSHRA
 
 A local MUSHRA-style listening test: a React UI drives a Python backend that
-loads Ambisonic `.wav` stimuli, decodes them in realtime through the IEM
-AllRADecoder plugin to a loudspeaker array, and records ratings to a
+plays Ambisonic `.wav` stimuli in realtime and records ratings to a
 timestamped CSV. All audio is rendered by the Python process straight to the
 selected output device -- the browser never plays audio itself.
 
+Python does not decode: it sends the raw Ambisonic channels (`num_channels`
+in `config.yaml`, 25 for 4th order) to the output device, and an external
+decoder renders them to the loudspeakers. (Hosting the IEM VST3s in Python via
+dawdreamer/pedalboard left them stuck on a 4-in/4-out bus, so decoding moved
+out of the app.)
+
 ## One-time setup
 
-1. **IEM AllRADecoder (VST3/AU)**. `pedalboard` (the Python VST host used
-   here) only loads VST3 or Audio Unit plugins, not legacy VST2. Install a
-   current [IEM Plug-in Suite](https://plugins.iem.at/) release (ships VST3 +
-   AU on macOS), then set `plugin_path` in `config.yaml` to the installed
-   `AllRADecoder.vst3` (or `.component`) path.
-2. **Decoder / loudspeaker layout config**. Once you have an AllRADecoder
-   configuration for your array, set `plugin_preset_path` in `config.yaml` to
-   it (a `.vstpreset` export). Until then the engine runs with the plugin's
-   default state, or in a passthrough fallback if no plugin is configured at
-   all.
+1. **Virtual audio device**. Any multichannel loopback device works, e.g.
+   Pro Tools Audio Bridge 64 (installed with Pro Tools) or
+   [BlackHole 64ch](https://existential.audio/blackhole/). Select it as the
+   output device in the test UI.
+2. **External decoder**. In Max, build a patcher that reads the Ambisonic
+   channels from the loopback device and decodes them to the loudspeaker interface, e.g.
+   `mc.adc~ 1-25` → `mcs.vst~ 25 25 SceneRotator` → `mcs.vst~ 25 48 AllRADecoder`
+   → `mc.dac~ 1-48`. Set Max's input device to the loopback device and its output device
+   to the loudspeaker interface (or use an Aggregate Device with drift
+   correction). Check with meters that every loudspeaker receives signal.
 3. **Backend**:
    ```
    python3 -m venv .venv

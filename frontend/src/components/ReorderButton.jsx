@@ -1,14 +1,6 @@
-import { useState } from 'react'
-
 export default function ReorderButton({ onClick, disabled }) {
-  const [hovering, setHovering] = useState(false)
-
   return (
-    <div
-      className="reorder-button-wrap"
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-    >
+    <div className="reorder-button-wrap">
       <button
         type="button"
         className="reorder-button"
@@ -35,7 +27,7 @@ export default function ReorderButton({ onClick, disabled }) {
           <rect x="66" y="4" width="6" height="20" rx="1" fill="#fff" />
         </svg>
       </button>
-      {hovering && <div className="reorder-button-message">Reorder stimuli</div>}
+      <div className="reorder-button-message">Reorder stimuli</div>
     </div>
   )
 }

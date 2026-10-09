@@ -1,7 +1,4 @@
-import { useState } from 'react'
-
 export default function FamiliarisationPage({ stimuli, selected, playing, played, onSelect, onContinue }) {
-  const [hoveringContinue, setHoveringContinue] = useState(false)
   const allPlayed = stimuli.length > 0 && stimuli.every((filename) => played.has(filename))
 
   return (
@@ -23,15 +20,11 @@ export default function FamiliarisationPage({ stimuli, selected, playing, played
           />
         ))}
       </div>
-      <div
-        className="primary-button-wrap"
-        onMouseEnter={() => setHoveringContinue(true)}
-        onMouseLeave={() => setHoveringContinue(false)}
-      >
+      <div className="primary-button-wrap">
         <button type="button" className="primary-button" disabled={!allPlayed} onClick={onContinue}>
           Start test
         </button>
-        {hoveringContinue && !allPlayed && (
+        {!allPlayed && (
           <div className="primary-button-message">Please listen to all examples before proceeding.</div>
         )}
       </div>

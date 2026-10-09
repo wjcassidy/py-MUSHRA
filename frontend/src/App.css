@@ -123,8 +123,8 @@
 .top-bar {
   display: flex;
   align-items: center;
-  gap: 32px;
-  padding: 16px 32px;
+  gap: 24px;
+  padding: 8px 24px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
@@ -135,13 +135,13 @@
   flex-direction: column;
   justify-content: center;
   align-items: stretch;
-  gap: 32px;
-  padding: 48px 24px;
-  transform: translateY(-30px);
+  gap: 16px;
+  padding: 12px 16px;
 }
 
 .test-area__heading {
-  margin: 10px;
+  margin-bottom: 10px;
+  margin-top: 0;
   text-align: center;
   font-size: 22px;
   font-weight: 600;
@@ -164,7 +164,7 @@
 .test-area__reference {
   grid-column: 1;
   justify-self: end;
-  margin-right: 28px;
+  margin-right: 16px;
 }
 
 .test-area__right {
@@ -172,15 +172,16 @@
   justify-self: start;
   align-self: center;
   display: flex;
-  align-items: center;
-  gap: 48px;
-  margin-left: 28px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-left: 16px;
 }
 
 .bottom-bar {
   display: flex;
   justify-content: center;
-  padding: 20px 32px;
+  padding: 10px 24px;
   background: var(--surface);
   border-top: 1px solid var(--border);
 }
@@ -188,7 +189,7 @@
 .stimuli-row {
   grid-column: 2;
   display: flex;
-  gap: 28px;
+  gap: 8px;
   align-items: flex-start;
   /* Each column's band-label text (64px + 8px gap) sits only to the left of
      its track, with nothing mirroring it on the right -- so the row's
@@ -204,7 +205,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 20px;
+  gap: 12px;
 }
 
 .stimulus-column--reference {
@@ -265,17 +266,12 @@
 }
 
 .reorder-button-wrap {
-  position: relative;
   display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .reorder-button-message {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: max-content;
-  max-width: 160px;
   font-size: 12px;
   line-height: 1.4;
   color: var(--text-dim);
@@ -295,7 +291,7 @@
 .rating-slider {
   display: flex;
   gap: 8px;
-  height: 320px;
+  height: 260px;
   touch-action: none;
 }
 
@@ -303,7 +299,7 @@
   display: flex;
   flex-direction: column;
   width: 64px;
-  height: 300px;
+  height: 250px;
   margin-top: 10px;
   text-align: right;
 }
@@ -325,7 +321,7 @@
 .rating-slider__track {
   position: relative;
   width: 40px;
-  height: 300px;
+  height: 250px;
   margin-top: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -381,6 +377,13 @@
   min-width: 96px;
 }
 
+/* In the right-hand column the reorder button sets the width; Play and
+   Next stretch to match it. */
+.test-area__right .transport-button,
+.test-area__right .next-button {
+  min-width: 0;
+}
+
 .transport-button:disabled,
 .next-button:disabled {
   color: var(--text-dim);
@@ -408,7 +411,7 @@
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
-  max-width: 200px;
+  max-width: 140px;
   font-size: 12px;
   line-height: 1.4;
   color: var(--text-dim);
@@ -419,7 +422,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 66.6667%;
 }
 

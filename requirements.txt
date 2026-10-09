@@ -1,7 +1,5 @@
 fastapi
 uvicorn[standard]
-dawdreamer
-pedalboard
 sounddevice
 scipy
 numpy

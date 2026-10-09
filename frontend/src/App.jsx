@@ -258,7 +258,7 @@ export default function App() {
   const nextDisabled = !allTouched || !hasTopRating
   const nextReasons = []
   if (!allTouched) nextReasons.push('Please adjust every slider.\n')
-  if (!hasTopRating) nextReasons.push('Rate at least one excerpt at 100.')
+  if (!hasTopRating) nextReasons.push('Rate at least one excerpt at the maximum.')
 
   return (
     <div className="app">

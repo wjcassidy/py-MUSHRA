@@ -28,10 +28,9 @@ export default function DeviceSelector({ devices, selectedIndex, onChange, chann
             ? '(invalid; using stereo output)'
             : '(valid)'}
           <div className="device-selector__panel">
-            <div>Detected inputs: {channelStatus.detected_input_channels ?? '?'}</div>
+            <div>Ambisonic channels: {channelStatus.required_output_channels ?? '?'}</div>
             <div>Device outputs: {channelStatus.device_output_channels ?? '?'}</div>
-            <div>Required outputs: {channelStatus.required_output_channels ?? '?'}</div>
-            <div>Plugin preset: {channelStatus.plugin_preset ?? 'none'}</div>
+            <div>Decoding: external (e.g. Max)</div>
             {!channelStatus.error && channelStatus.monitor_channels && (
               <div>
                 Using first {channelStatus.monitor_channels} of {channelStatus.required_output_channels}{' '}

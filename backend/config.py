@@ -13,10 +13,7 @@ class Config:
     stimuli_dir: Path
     familiarisation_dir: Path
     results_dir: Path
-    plugin_path: Path | None
-    plugin_preset_path: Path | None
-    num_input_channels: int | None
-    num_output_channels: int | None
+    num_channels: int | None
     sample_rate: int
     block_size: int
 
@@ -34,10 +31,8 @@ class Config:
             stimuli_dir=resolve(raw["stimuli_dir"]),
             familiarisation_dir=resolve(raw.get("familiarisation_dir")) or resolve(raw["stimuli_dir"]),
             results_dir=resolve(raw["results_dir"]),
-            plugin_path=resolve(raw.get("plugin_path")),
-            plugin_preset_path=resolve(raw.get("plugin_preset_path")),
-            num_input_channels=raw.get("num_input_channels"),
-            num_output_channels=raw.get("num_output_channels"),
+            num_channels=raw.get("num_channels"),
             sample_rate=int(raw["sample_rate"]),
             block_size=int(raw["block_size"]),
         )
+
