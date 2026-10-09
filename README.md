@@ -3,45 +3,47 @@
 A local MUSHRA-style listening test: a React UI drives a Python backend that
 plays Ambisonic `.wav` stimuli in realtime and records ratings to a
 timestamped CSV. All audio is rendered by the Python process straight to the
-selected output device -- the browser never plays audio itself.
+selected output device; the browser never plays audio itself.
 
-Python does not decode: it sends the raw Ambisonic channels (`num_channels`
-in `config.yaml`, 25 for 4th order) to the output device, and an external
-decoder renders them to the loudspeakers. (Hosting the IEM VST3s in Python via
-dawdreamer/pedalboard left them stuck on a 4-in/4-out bus, so decoding moved
-out of the app.)
+Python sends the raw Ambisonic channels (`num_channels`
+in `config.yaml`, 25 for 4th order) to the output device, and an external Max/MSP
+decoder renders them to the loudspeakers.
 
-## One-time setup
+<img width="864" height="543" alt="Screenshot 2026-10-09 at 09 03 34" src="https://github.com/user-attachments/assets/b218f375-2fbf-4033-9b1c-26842ab36a3b" />
 
-1. **Virtual audio device**. Any multichannel loopback device works, e.g.
-   Pro Tools Audio Bridge 64 (installed with Pro Tools) or
-   [BlackHole 64ch](https://existential.audio/blackhole/). Select it as the
-   output device in the test UI.
-2. **External decoder**. In Max, build a patcher that reads the Ambisonic
-   channels from the loopback device and decodes them to the loudspeaker interface, e.g.
-   `mc.adc~ 1-25` → `mcs.vst~ 25 25 SceneRotator` → `mcs.vst~ 25 48 AllRADecoder`
-   → `mc.dac~ 1-48`. Set Max's input device to the loopback device and its output device
-   to the loudspeaker interface (or use an Aggregate Device with drift
-   correction). Check with meters that every loudspeaker receives signal.
-3. **Backend**:
+## Quick-Start Guide
+
+### Install packages and set up virtual devices
+
+1. **Backend**:
    ```
    python3 -m venv .venv
    ./.venv/bin/pip install -r requirements.txt
    ```
-4. **Frontend**:
+2. **Frontend**:
    ```
    cd frontend && npm install
    ```
+3. **Virtual audio device**. Any multichannel loopback device works, e.g.
+   Pro Tools Audio Bridge 64 or
+   [BlackHole 64ch](https://existential.audio/blackhole/). Select it as the
+   output device in the test UI.
+4. **External decoder**. In `backend/decoder.maxpat` (Max/MSP 8 or 9) set the input device to the loopback device and the output device
+   to the loudspeaker interface.
 
-## Stimuli
+### Add your stimulus files 
 
-Put `.wav` files in `Stimuli/`, named `<prefix>_<suffix>.wav`. Files sharing
-a prefix form one MUSHRA page/item. Exactly one file per item must use the
-suffix `target` (the true reference); every other suffix is an anonymous
-test condition. A hidden copy of the reference is automatically added to
-each page and randomized among the lettered conditions.
+Put `.wav` files in `stimuli/`, named `<prefix>_<suffix>.wav`. Files sharing
+a prefix form one test page. Exactly one file per item must use the
+suffix `target` (the reference); every other suffix is an anonymous
+test condition. A hidden reference is automatically added to
+each page and randomised among the lettered
+ conditions.
 
-## Running
+Place any `.wav` files into `familiarisation/` to be presented to the participant
+before the main test. They must listen to all of these before continuing.
+
+### Running
 
 Run `./run_test` from the repo root. It stops any previous instance,
 starts the backend and frontend, and opens the browser automatically.
