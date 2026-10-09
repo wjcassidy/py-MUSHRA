@@ -7,6 +7,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Use the venv's Node/npm (installed via nodeenv) if present.
+export PATH="$SCRIPT_DIR/.venv/bin:$PATH"
+
 BACKEND_PORT=8000
 FRONTEND_PORT=5173
 

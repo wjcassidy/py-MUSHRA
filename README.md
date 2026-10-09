@@ -20,10 +20,18 @@ decoder renders them to the loudspeakers.
    python3 -m venv .venv
    ./.venv/bin/pip install -r requirements.txt
    ```
-2. **Frontend**:
+2. **Frontend**. Node.js/npm is installed into the same `.venv` via
+   `nodeenv` (from `requirements.txt`), so no system-wide Node install is needed:
    ```
+   source .venv/bin/activate
+   nodeenv -p --node=lts
    cd frontend && npm install
    ```
+   Activate `.venv` first: `nodeenv -p` installs into whichever venv is
+   currently active. If it fails with `CERTIFICATE_VERIFY_FAILED` (python.org
+   Python on macOS), run `/Applications/Python 3.x/Install Certificates.command`
+   and retry. If you already have Node.js 20+ installed system-wide, you can
+   skip the `nodeenv` line.
 3. **Virtual audio device**. Any multichannel loopback device works, e.g.
    Pro Tools Audio Bridge 64 or
    [BlackHole 64ch](https://existential.audio/blackhole/). Select it as the
@@ -62,5 +70,5 @@ To run the servers manually instead, in separate terminals:
 ```
 
 ```
-cd frontend && npm run dev
+source .venv/bin/activate && cd frontend && npm run dev
 ```

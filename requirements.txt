@@ -4,3 +4,4 @@ sounddevice
 scipy
 numpy
 pyyaml
+nodeenv
