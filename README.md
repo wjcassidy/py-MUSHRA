@@ -20,8 +20,7 @@ decoder renders them to the loudspeakers.
    python3 -m venv .venv
    ./.venv/bin/pip install -r requirements.txt
    ```
-2. **Frontend**. Node.js/npm is installed into the same `.venv` via
-   `nodeenv` (from `requirements.txt`), so no system-wide Node install is needed:
+2. **Frontend**:
    ```
    source .venv/bin/activate
    nodeenv -p --node=lts
@@ -32,11 +31,11 @@ decoder renders them to the loudspeakers.
    Python on macOS), run `/Applications/Python 3.x/Install Certificates.command`
    and retry. If you already have Node.js 20+ installed system-wide, you can
    skip the `nodeenv` line.
-3. **Virtual audio device**. Any multichannel loopback device works, e.g.
+3. **Virtual audio device**: Any multichannel loopback device works, e.g.
    Pro Tools Audio Bridge 64 or
    [BlackHole 64ch](https://existential.audio/blackhole/). Select it as the
    output device in the test UI.
-4. **External decoder**. In `backend/decoder.maxpat` (Max/MSP 8 or 9) set the input device to the loopback device and the output device
+4. **External decoder**: Only required if you want live decoding (you can render the decoding into the stimulus files and skip this step). In `backend/decoder.maxpat` (Max/MSP 8 or 9) set the input device to the loopback device and the output device
    to the loudspeaker interface.
 
 ### Add your stimulus files 
