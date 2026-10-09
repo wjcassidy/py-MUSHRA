@@ -37,6 +37,8 @@ If you render the loudspeaker decoding into the stimulus files, you can skip the
 
 3. Place any `.wav` files into `familiarisation/` to be presented to the participant before the main test. They'll need to listen to all of these before continuing.
 
+**NB**: stimuli that appear on the same page must be of the same duration for looping to be seamless. The duration can be different between pages, though.
+
 ### Running the test
 
 1. Run `./run_test` from the repo root. It stops any previous instance, starts the backend and frontend, and opens the browser automatically. Use Ctrl+C to stop both servers.
