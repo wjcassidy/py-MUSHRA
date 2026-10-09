@@ -25,6 +25,7 @@ decoder renders them to the loudspeakers.
    source .venv/bin/activate
    nodeenv -p --node=lts
    cd frontend && npm install
+   cd ../
    ```
    Activate `.venv` first: `nodeenv -p` installs into whichever venv is
    currently active. If it fails with `CERTIFICATE_VERIFY_FAILED` (python.org
