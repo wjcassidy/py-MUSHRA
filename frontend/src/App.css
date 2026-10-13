@@ -538,3 +538,69 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+.app--call {
+  background: #3a1d20;
+}
+
+.call-button {
+  /* Positioned with a z-index so it stays clickable above .call-overlay. */
+  position: relative;
+  z-index: 30;
+  margin-left: auto;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 2px solid #c0392b;
+  background: #c0392b;
+  color: #fff;
+  cursor: pointer;
+}
+
+.call-button:hover {
+  opacity: 0.9;
+}
+
+.call-button--active {
+  border-color: #fff;
+}
+
+/* Covers the whole UI (but not the call button) so the test can't be
+   interacted with while waiting for the researcher. */
+.call-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(103, 29, 36, 0.6);
+}
+
+.call-panel {
+  position: relative;
+  max-width: 360px;
+  padding: 20px 24px;
+  border-radius: 10px;
+  border: 1px solid #c0392b;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Sits just above the panel without shifting it off-centre. */
+.call-acknowledged {
+  position: absolute;
+  bottom: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}

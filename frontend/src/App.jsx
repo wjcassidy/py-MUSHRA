@@ -9,6 +9,7 @@ import VolumeControl from './components/VolumeControl'
 import ReorderButton from './components/ReorderButton'
 import WelcomePage from './components/WelcomePage'
 import FamiliarisationPage from './components/FamiliarisationPage'
+import CallResearcher from './components/CallResearcher'
 import './App.css'
 
 export default function App() {
@@ -36,6 +37,9 @@ export default function App() {
   const [familiarisationSelected, setFamiliarisationSelected] = useState(null)
   const [familiarisationPlaying, setFamiliarisationPlaying] = useState(false)
   const [familiarisationPlayed, setFamiliarisationPlayed] = useState(() => new Set())
+
+  const [callActive, setCallActive] = useState(false)
+  const [callAcknowledged, setCallAcknowledged] = useState(false)
 
   useEffect(() => {
     api
@@ -179,6 +183,49 @@ export default function App() {
       .catch((err) => setError(err.message))
   }
 
+  // Poll for the researcher pressing Enter in the backend terminal.
+  useEffect(() => {
+    if (!callActive || callAcknowledged) return
+    const id = setInterval(() => {
+      api
+        .getResearcherCall()
+        .then((data) => {
+          if (data.active && data.acknowledged) setCallAcknowledged(true)
+        })
+        .catch((err) => setError(err.message))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [callActive, callAcknowledged])
+
+  // Enter in the browser acknowledges the call, as Enter in the backend terminal does.
+  useEffect(() => {
+    if (!callActive || callAcknowledged) return
+    function handleKeyDown(event) {
+      if (event.key !== 'Enter') return
+      event.preventDefault() // don't also "click" the focused Call researcher button
+      api
+        .acknowledgeResearcherCall()
+        .then((data) => {
+          if (data.active && data.acknowledged) setCallAcknowledged(true)
+        })
+        .catch((err) => setError(err.message))
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [callActive, callAcknowledged])
+
+  function handleCallToggle() {
+    const active = !callActive
+    setCallActive(active)
+    setCallAcknowledged(false)
+    if (active) {
+      setIsPlaying(false)
+      setFamiliarisationPlaying(false)
+      api.pause().catch((err) => setError(err.message))
+    }
+    api.setResearcherCall(active).catch((err) => setError(err.message))
+  }
+
   const deviceSelectorBar = (
     <header className="top-bar">
       <DeviceSelector
@@ -188,66 +235,59 @@ export default function App() {
         channelStatus={channelStatus}
       />
       <VolumeControl volume={volume} onChange={handleVolumeChange} />
+      <CallResearcher active={callActive} acknowledged={callAcknowledged} onToggle={handleCallToggle} />
     </header>
   )
 
+  const appShell = (children) => (
+    <div className={`app${callActive ? ' app--call' : ''}`}>
+      {deviceSelectorBar}
+      {children}
+    </div>
+  )
+
   if (error) {
-    return (
-      <div className="app">
-        {deviceSelectorBar}
-        <div className="status-screen status-screen--error">Error: {error}</div>
-      </div>
+    return appShell(
+      <div className="status-screen status-screen--error">Error: {error}</div>
     )
   }
 
   if (stage === 'welcome') {
-    return (
-      <div className="app">
-        {deviceSelectorBar}
-        <WelcomePage onStart={() => setStage('familiarisation')} />
-      </div>
+    return appShell(
+      <WelcomePage onStart={() => setStage('familiarisation')} />
     )
   }
 
   if (stage === 'familiarisation') {
-    return (
-      <div className="app">
-        {deviceSelectorBar}
-        <FamiliarisationPage
-          stimuli={familiarisationStimuli}
-          selected={familiarisationSelected}
-          playing={familiarisationPlaying}
-          played={familiarisationPlayed}
-          onSelect={handleFamiliarisationSelect}
-          onContinue={handleFamiliarisationContinue}
-        />
-      </div>
+    return appShell(
+      <FamiliarisationPage
+        stimuli={familiarisationStimuli}
+        selected={familiarisationSelected}
+        playing={familiarisationPlaying}
+        played={familiarisationPlayed}
+        onSelect={handleFamiliarisationSelect}
+        onContinue={handleFamiliarisationContinue}
+      />
     )
   }
 
   if (completed) {
-    return (
-      <div className="app">
-        {deviceSelectorBar}
-        <div className="status-screen">
-          <h1>Test complete!</h1>
-          <h2>Thank you for participating.</h2>
-          {completed.csvFilename ? (
-            <p>Results saved.</p>
-          ) : (
-            <p>This test session has already been completed.</p>
-          )}
-        </div>
+    return appShell(
+      <div className="status-screen">
+        <h1>Test complete!</h1>
+        <h2>Thank you for participating.</h2>
+        {completed.csvFilename ? (
+          <p>Results saved.</p>
+        ) : (
+          <p>This test session has already been completed.</p>
+        )}
       </div>
     )
   }
 
   if (!page) {
-    return (
-      <div className="app">
-        {deviceSelectorBar}
-        <div className="status-screen">Loading…</div>
-      </div>
+    return appShell(
+      <div className="status-screen">Loading…</div>
     )
   }
 
@@ -260,9 +300,8 @@ export default function App() {
   if (!allTouched) nextReasons.push('Please adjust every slider.\n')
   if (!hasTopRating) nextReasons.push('Rate at least one excerpt at the maximum.')
 
-  return (
-    <div className="app">
-      {deviceSelectorBar}
+  return appShell(
+    <>
       <main className="test-area">
         <h1 className="test-area__heading">Rate the similarity of each excerpt to the reference</h1>
         <div className="test-area__content">
@@ -308,6 +347,6 @@ export default function App() {
       <footer className="bottom-bar">
         <ProgressBar current={page.page_index + 1} total={page.total_pages} />
       </footer>
-    </div>
+    </>
   )
 }

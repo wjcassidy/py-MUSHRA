@@ -26,4 +26,7 @@ export const api = {
   getVolume: () => request('/volume'),
   setVolume: (volumeDb) => request('/volume', { method: 'POST', body: JSON.stringify({ volume_db: volumeDb }) }),
   finishFamiliarisation: () => request('/familiarisation-finish', { method: 'POST' }),
+  getResearcherCall: () => request('/call-researcher'),
+  acknowledgeResearcherCall: () => request('/call-researcher/acknowledge', { method: 'POST' }),
+  setResearcherCall: (active) => request('/call-researcher', { method: 'POST', body: JSON.stringify({ active }) }),
 }

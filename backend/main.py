@@ -9,10 +9,21 @@ from pydantic import BaseModel
 
 from backend.audio_engine import VOLUME_MAX_DB, VOLUME_MIN_DB, AudioDeviceError, AudioEngine
 from backend.config import Config
+from backend.researcher_call import ResearcherCall
 from backend.session import REFERENCE_LETTER, Session, StimuliError
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("py_mushra.main")
+
+
+class _HideResearcherCallAccessLog(logging.Filter):
+    # The frontend polls /api/call-researcher every second while a call is
+    # active; keep those requests from burying the terminal prompt.
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "/api/call-researcher" not in record.getMessage()
+
+
+logging.getLogger("uvicorn.access").addFilter(_HideResearcherCallAccessLog())
 
 app = FastAPI(title="py-MUSHRA")
 
@@ -30,10 +41,12 @@ app.state.startup_error = None
 # Volume is fixed once familiarisation is finished, so every test page is heard
 # at the level the listener chose.
 app.state.volume_locked = False
+app.state.researcher_call = ResearcherCall()
 
 
 @app.on_event("startup")
 def startup() -> None:
+    app.state.researcher_call.start_listening()
     try:
         config = Config.load()
         session = Session.build(config)
@@ -87,6 +100,10 @@ class FamiliarisationSelectRequest(BaseModel):
 
 class VolumeRequest(BaseModel):
     volume_db: float
+
+
+class ResearcherCallRequest(BaseModel):
+    active: bool
 
 
 @app.get("/api/session")
@@ -205,3 +222,18 @@ def submit_ratings(body: RatingsRequest):
     engine.reset_page()
     session.log_current_page()
     return result
+
+
+@app.get("/api/call-researcher")
+def get_researcher_call():
+    return app.state.researcher_call.state()
+
+
+@app.post("/api/call-researcher")
+def set_researcher_call(body: ResearcherCallRequest):
+    return app.state.researcher_call.set_active(body.active)
+
+
+@app.post("/api/call-researcher/acknowledge")
+def acknowledge_researcher_call():
+    return app.state.researcher_call.acknowledge("web UI")
