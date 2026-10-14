@@ -53,6 +53,8 @@ def startup() -> None:
         engine = AudioEngine(config)
         engine.startup(session.current_page.reference_path)
         engine.reset_page()
+        # Preload page 1 while the listener is on the welcome/familiarisation pages.
+        engine.set_page_stimuli(session.current_page.stimulus_paths)
         app.state.session = session
         app.state.engine = engine
         app.state.config = config
@@ -204,9 +206,13 @@ def familiarisation_finish():
     # Familiarisation and the main test share engine.select(), which can leave a
     # crossfade queued from the last familiarisation clip into the first real
     # stimulus -- clear that transport state before the test's own audio begins.
-    _engine().reset_page()
+    engine = _engine()
+    session = _session()
+    engine.reset_page()
+    # Releases the familiarisation clips; page 1 was already preloaded at startup.
+    engine.set_page_stimuli(session.current_page.stimulus_paths)
     app.state.volume_locked = True
-    _session().log_current_page()
+    session.log_current_page()
     return {"ok": True}
 
 
@@ -220,6 +226,7 @@ def submit_ratings(body: RatingsRequest):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     engine.reset_page()
+    engine.set_page_stimuli([] if session.is_finished else session.current_page.stimulus_paths)
     session.log_current_page()
     return result
 

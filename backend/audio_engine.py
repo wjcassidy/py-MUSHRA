@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -70,7 +71,17 @@ class AudioEngine:
         self.num_channels: int | None = config.num_channels
 
         self._lock = threading.Lock()
+        # Only the current page's stimuli are kept in memory (the full stimulus set
+        # can be far larger than RAM): set_page_stimuli() evicts the previous page
+        # and preloads the next one in the background. _cache_lock guards the cache
+        # bookkeeping; when both locks are needed, take _lock first. Entries are only
+        # removed while holding _lock too, so the audio callback (which reads the
+        # cache under _lock) never sees its current stimulus disappear.
+        self._cache_lock = threading.Lock()
         self._stimulus_cache: dict[Path, np.ndarray] = {}
+        self._loading: dict[Path, Future] = {}
+        self._page_paths: frozenset[Path] = frozenset()
+        self._preloader = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stimulus-preload")
         self.current_path: Path | None = None
         self.playing = False
         self.playhead = 0
@@ -117,6 +128,9 @@ class AudioEngine:
                 self.sample_rate,
             )
             self.sample_rate = probe_sr
+
+        # The probe is the first page's reference -- keep it so preloading skips it.
+        self._stimulus_cache[probe_stimulus_path] = probe_audio
 
         if self.num_channels is None:
             self.num_channels = probe_audio.shape[0]
@@ -272,26 +286,85 @@ class AudioEngine:
 
     # -- stimulus loading / transport ----------------------------------------
 
+    def _read_stimulus(self, path: Path) -> np.ndarray:
+        sample_rate, audio = _read_wav_as_float32(path)
+        if sample_rate != self.sample_rate:
+            logger.warning(
+                "%s has sample rate %d, expected %d; playback speed/pitch will be off.",
+                path.name,
+                sample_rate,
+                self.sample_rate,
+            )
+        if self.num_channels is not None and audio.shape[0] != self.num_channels:
+            logger.error(
+                "%s has %d channel(s), but %d are being sent to the decoder (config.yaml's "
+                "num_channels) -- extra channels are dropped and missing ones are silent.",
+                path.name,
+                audio.shape[0],
+                self.num_channels,
+            )
+        return audio
+
     def _load_stimulus(self, path: Path) -> np.ndarray:
-        if path not in self._stimulus_cache:
-            sample_rate, audio = _read_wav_as_float32(path)
-            if sample_rate != self.sample_rate:
-                logger.warning(
-                    "%s has sample rate %d, expected %d; playback speed/pitch will be off.",
-                    path.name,
-                    sample_rate,
-                    self.sample_rate,
-                )
-            if self.num_channels is not None and audio.shape[0] != self.num_channels:
-                logger.error(
-                    "%s has %d channel(s), but %d are being sent to the decoder (config.yaml's "
-                    "num_channels) -- extra channels are dropped and missing ones are silent.",
-                    path.name,
-                    audio.shape[0],
-                    self.num_channels,
-                )
+        """Return path's audio, reading it into the cache if needed. If another
+        thread (e.g. the preloader) is already reading it, wait for that read
+        instead of reading the same file twice."""
+        with self._cache_lock:
+            audio = self._stimulus_cache.get(path)
+            if audio is not None:
+                return audio
+            pending = self._loading.get(path)
+            if pending is None:
+                pending = Future()
+                self._loading[path] = pending
+                is_reader = True
+            else:
+                is_reader = False
+
+        if not is_reader:
+            return pending.result()
+
+        try:
+            audio = self._read_stimulus(path)
+        except BaseException as exc:
+            with self._cache_lock:
+                del self._loading[path]
+            pending.set_exception(exc)
+            raise
+        with self._cache_lock:
+            del self._loading[path]
             self._stimulus_cache[path] = audio
-        return self._stimulus_cache[path]
+        pending.set_result(audio)
+        return audio
+
+    def set_page_stimuli(self, paths: list[Path]) -> None:
+        """Make paths the only stimuli kept in memory: evict everything else, then
+        load paths in the background (in order) so the first click on each is
+        instant. Call after reset_page(); pass [] to free everything."""
+        with self._cache_lock:
+            self._page_paths = frozenset(paths)
+        self._evict_unneeded()
+        self._preloader.submit(self._preload, list(paths))
+
+    def _evict_unneeded(self) -> None:
+        with self._lock, self._cache_lock:
+            keep = self._page_paths | {self.current_path, self.crossfade_from}
+            evicted = [self._stimulus_cache.pop(p) for p in list(self._stimulus_cache) if p not in keep]
+        if evicted:
+            logger.info("Released %.1f MB of stimulus audio", sum(a.nbytes for a in evicted) / 1e6)
+        # evicted's arrays are freed here, outside the locks
+
+    def _preload(self, paths: list[Path]) -> None:
+        for path in paths:
+            with self._cache_lock:
+                if path not in self._page_paths:
+                    break  # the page changed while queued/loading -- a newer preload takes over
+            try:
+                self._load_stimulus(path)
+            except Exception:
+                logger.exception("Failed to preload %s", path.name)
+        # If the page changed mid-read, the file just read belongs to the old page.
+        self._evict_unneeded()
 
     def reset_page(self) -> None:
         with self._lock:
@@ -305,8 +378,12 @@ class AudioEngine:
             self._gain_target = 0.0
 
     def select(self, path: Path) -> None:
-        self._load_stimulus(path)  # populate cache outside the lock-held callback path
+        audio = self._load_stimulus(path)  # read outside the lock-held callback path
         with self._lock:
+            with self._cache_lock:
+                # Re-insert in case a page change evicted it since loading, so the
+                # callback can always find current_path/crossfade_from in the cache.
+                self._stimulus_cache.setdefault(path, audio)
             if self._carry.shape[1] > 0:
                 self.playhead = max(0, self.playhead - self._carry.shape[1])
                 self._carry = np.zeros((0, 0), dtype=np.float32)

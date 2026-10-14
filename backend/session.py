@@ -39,6 +39,16 @@ class Page:
     def eval_letters(self) -> list[str]:
         return [letter for letter, _, _ in self.slots]
 
+    @property
+    def stimulus_paths(self) -> list[Path]:
+        """Every distinct file this page can play, reference first (the hidden
+        reference shares the reference's file, so it isn't repeated)."""
+        paths = [self.reference_path]
+        for _, path, _ in self.slots:
+            if path not in paths:
+                paths.append(path)
+        return paths
+
     def path_for_letter(self, letter: str) -> Path:
         if letter == REFERENCE_LETTER:
             return self.reference_path
