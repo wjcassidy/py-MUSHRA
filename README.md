@@ -33,7 +33,7 @@ If you render the loudspeaker decoding into the stimulus files, you can skip the
 
 1. Create the folders `stimuli` and `familiarisation` on the top level.
 
-2. Put `.wav` files in `stimuli/`, named `<prefix>_[...]_<suffix>.wav`. Files sharing a prefix form one test page. Exactly one file per item must use the suffix `target` (the reference); every other suffix is an anonymous test condition. A hidden reference is automatically added to each page and randomised among the lettered conditions.
+2. Put `.wav` files in `stimuli/`, named `<prefix>_<suffix>.wav`. Files sharing a prefix form one test page. Exactly one file per item must use the suffix `target` (the reference); every other suffix is an anonymous test condition. A hidden reference is automatically added to each page and randomised among the lettered conditions.
 
 3. Place any `.wav` files into `familiarisation/` to be presented to the participant before the main test. They'll need to listen to all of these before continuing.
 
