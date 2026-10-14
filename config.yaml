@@ -20,4 +20,4 @@ results_dir: results
 num_channels: 25
 
 sample_rate: 48000
-block_size: 512
+block_size: 1024
