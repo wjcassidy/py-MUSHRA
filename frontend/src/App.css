@@ -295,27 +295,58 @@
   touch-action: none;
 }
 
-.rating-slider__bands {
+.rating-slider__scale {
   display: flex;
   flex-direction: column;
   width: 64px;
   height: 250px;
+  position: relative;
   margin-top: 10px;
   text-align: right;
+  color: var(--text-dim);
 }
 
-.rating-slider__band {
-  flex: 1;
+/* Centred on the track's top edge, where the thumb sits at the maximum. */
+.rating-slider__max-label {
+  height: 20px;
+  margin-top: -10px;
+  line-height: 20px;
+  font-size: 13px;
+}
+
+/* Spans the full scale height so the arrow is centred on the track. */
+.rating-slider__direction {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  font-size: 14px;
-  color: var(--text-dim);
-  border-top: 1px solid var(--border);
+  gap: 6px;
 }
 
-.rating-slider__band:first-child {
-  border-top: none;
+.rating-slider__direction-label {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.rating-slider__arrow {
+  position: relative;
+  width: 2px;
+  height: 100px;
+  margin-right: 4px;
+  margin-bottom: 6px;
+  background: var(--text-dim);
+}
+
+.rating-slider__arrow::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid var(--text-dim);
 }
 
 .rating-slider__track {
@@ -355,6 +386,30 @@
 
 .rating-slider__thumb--touched {
   background: var(--accent);
+}
+
+/* Matches the track's inner (padding-box) height so ticks line up with the thumb. */
+.rating-slider__ticks {
+  position: relative;
+  width: 12px;
+  height: 248px;
+  margin-top: 11px;
+  margin-left: -8px; /* cancel the flex gap so ticks meet the track */
+}
+
+.rating-slider__tick {
+  position: absolute;
+  left: 0;
+  width: 5px;
+  height: 1px;
+  background: var(--text-dim);
+  opacity: 0.6;
+  transform: translateY(50%);
+}
+
+.rating-slider__tick--major {
+  width: 10px;
+  opacity: 1;
 }
 
 .side-controls {

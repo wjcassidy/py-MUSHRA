@@ -1,6 +1,13 @@
 import { useRef } from 'react'
 
-const BANDS = ['Excellent', 'Good', 'Fair', 'Poor', 'Bad']
+// 6 major ticks evenly spanning 0-100, with two minor ticks between each pair.
+const MAJOR_TICKS = 6
+const SUBDIVISIONS = 3
+const STEPS = (MAJOR_TICKS - 1) * SUBDIVISIONS
+const TICKS = Array.from({ length: STEPS + 1 }, (_, i) => ({
+  position: (i / STEPS) * 100,
+  major: i % SUBDIVISIONS === 0,
+}))
 
 export default function RatingSlider({ value, touched, active, onChange, onActivate }) {
   const trackRef = useRef(null)
@@ -37,12 +44,12 @@ export default function RatingSlider({ value, touched, active, onChange, onActiv
 
   return (
     <div className={`rating-slider${active ? ' rating-slider--active' : ''}`}>
-      <div className="rating-slider__bands">
-        {BANDS.map((label) => (
-          <div key={label} className="rating-slider__band">
-            {label}
-          </div>
-        ))}
+      <div className="rating-slider__scale">
+        <div className="rating-slider__max-label">Identical</div>
+        <div className="rating-slider__direction">
+          <span className="rating-slider__direction-label">Less similar</span>
+          <div className="rating-slider__arrow" aria-hidden="true" />
+        </div>
       </div>
       <div
         ref={trackRef}
@@ -57,6 +64,15 @@ export default function RatingSlider({ value, touched, active, onChange, onActiv
           className={`rating-slider__thumb${touched ? ' rating-slider__thumb--touched' : ''}`}
           style={{ bottom: `${value}%` }}
         />
+      </div>
+      <div className="rating-slider__ticks" aria-hidden="true">
+        {TICKS.map(({ position, major }) => (
+          <div
+            key={position}
+            className={`rating-slider__tick${major ? ' rating-slider__tick--major' : ''}`}
+            style={{ bottom: `${position}%` }}
+          />
+        ))}
       </div>
     </div>
   )
