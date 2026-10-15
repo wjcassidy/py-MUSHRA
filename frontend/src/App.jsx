@@ -303,7 +303,7 @@ export default function App() {
   return appShell(
     <>
       <main className="test-area">
-        <h1 className="test-area__heading">Rate the similarity of each excerpt to the reference</h1>
+        <h1 className="test-area__heading">Rate the match of the acoustics to the reference</h1>
         <div className="test-area__content">
           <div className="test-area__reference stimulus-column stimulus-column--reference">
             <StimulusButton
