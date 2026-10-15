@@ -517,6 +517,16 @@
   color: var(--text);
 }
 
+.device-selector--locked select {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.device-selector__lock {
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .device-selector__status {
   position: relative;
   font-size: 12px;

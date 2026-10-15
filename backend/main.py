@@ -164,6 +164,7 @@ def _volume_state(engine: AudioEngine) -> dict:
         "min_db": VOLUME_MIN_DB,
         "max_db": VOLUME_MAX_DB,
         "locked": app.state.volume_locked,
+        "hidden": _config().hide_volume,
     }
 
 

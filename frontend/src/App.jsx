@@ -233,6 +233,7 @@ export default function App() {
         selectedIndex={deviceIndex}
         onChange={handleDeviceChange}
         channelStatus={channelStatus}
+        locked={stage !== 'welcome'}
       />
       <VolumeControl volume={volume} onChange={handleVolumeChange} />
       <CallResearcher active={callActive} acknowledged={callAcknowledged} onToggle={handleCallToggle} />

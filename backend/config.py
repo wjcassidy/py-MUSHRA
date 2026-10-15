@@ -17,6 +17,7 @@ class Config:
     num_channels: int | None
     sample_rate: int
     block_size: int
+    hide_volume: bool
 
     @classmethod
     def load(cls, path: Path = REPO_ROOT / "config.yaml") -> "Config":
@@ -36,5 +37,6 @@ class Config:
             num_channels=raw.get("num_channels"),
             sample_rate=int(raw["sample_rate"]),
             block_size=int(raw["block_size"]),
+            hide_volume=bool(raw.get("hide_volume", False)),
         )
 

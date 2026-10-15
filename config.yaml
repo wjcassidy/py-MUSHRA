@@ -27,3 +27,6 @@ num_channels: 25
 
 sample_rate: 48000
 block_size: 1024
+
+# Hide the listener volume slider from the UI (volume stays at its default).
+hide_volume: true

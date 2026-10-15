@@ -7,7 +7,7 @@ export default function VolumeControl({ volume, onChange }) {
     if (volume) setDraft(String(volume.volume_db))
   }, [volume?.volume_db])
 
-  if (!volume) return null
+  if (!volume || volume.hidden) return null
   const { volume_db, min_db, max_db, locked } = volume
 
   function commitDraft() {

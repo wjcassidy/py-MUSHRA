@@ -1,10 +1,14 @@
-export default function DeviceSelector({ devices, selectedIndex, onChange, channelStatus }) {
+export default function DeviceSelector({ devices, selectedIndex, onChange, channelStatus, locked }) {
   return (
-    <div className="device-selector">
+    <div
+      className={`device-selector${locked ? ' device-selector--locked' : ''}`}
+      title={locked ? 'Output device is locked for the test' : undefined}
+    >
       <label htmlFor="device-select">Output device</label>
       <select
         id="device-select"
         value={selectedIndex ?? ''}
+        disabled={locked}
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
       >
         <option value="">System default</option>
@@ -14,6 +18,7 @@ export default function DeviceSelector({ devices, selectedIndex, onChange, chann
           </option>
         ))}
       </select>
+      {locked && <span className="device-selector__lock">(locked)</span>}
       {channelStatus && (
         <div
           className={`device-selector__status${
