@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 @dataclass
 class Config:
     stimuli_dir: Path
+    repeats_dir: Path
     familiarisation_dir: Path
     results_dir: Path
     num_channels: int | None
@@ -29,6 +30,7 @@ class Config:
 
         return cls(
             stimuli_dir=resolve(raw["stimuli_dir"]),
+            repeats_dir=resolve(raw["repeats_dir"]),
             familiarisation_dir=resolve(raw.get("familiarisation_dir")) or resolve(raw["stimuli_dir"]),
             results_dir=resolve(raw["results_dir"]),
             num_channels=raw.get("num_channels"),

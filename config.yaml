@@ -2,7 +2,12 @@
 
 # Folder of "<prefix>_<suffix>.wav" stimuli. Files sharing a prefix form one
 # MUSHRA page/item. The suffix "target" marks the true reference for that item.
-stimuli_dir: stimuli
+stimuli_dir: stimuli_main
+
+# Folder of repeated stimuli, following the same naming convention as
+# stimuli_dir. Each item here becomes an extra page, shuffled in randomly among
+# the main stimulus pages. Results rows from these pages have repeat=1.
+repeats_dir: stimuli_repeats
 
 # Folder of stimuli played on the familiarisation page (any .wav files --
 # they do not need to follow the "<prefix>_<suffix>.wav" convention above).

@@ -34,6 +34,7 @@ class Page:
     reference_path: Path
     # ordered list of (letter, path, is_hidden_reference)
     slots: list[tuple[str, Path, bool]]
+    is_repeat: bool = False
 
     @property
     def eval_letters(self) -> list[str]:
@@ -64,6 +65,7 @@ class RatingRow:
     page_index: int
     filename: str
     rating: float
+    is_repeat: bool
 
 
 def discover_items(stimuli_dir: Path) -> list[Item]:
@@ -99,12 +101,9 @@ def discover_items(stimuli_dir: Path) -> list[Item]:
     return items
 
 
-def _build_half(items: list[Item], rng: random.Random) -> list[Page]:
-    shuffled_items = items[:]
-    rng.shuffle(shuffled_items)
-
+def _build_pages(items: list[Item], rng: random.Random, is_repeat: bool) -> list[Page]:
     pages: list[Page] = []
-    for item in shuffled_items:
+    for item in items:
         candidates = list(item.condition_paths) + [item.target_path]  # hidden reference copy
         rng.shuffle(candidates)
         letters = list(string.ascii_uppercase[: len(candidates)])
@@ -112,7 +111,9 @@ def _build_half(items: list[Item], rng: random.Random) -> list[Page]:
             (letter, path, path == item.target_path)
             for letter, path in zip(letters, candidates)
         ]
-        pages.append(Page(prefix=item.prefix, reference_path=item.target_path, slots=slots))
+        pages.append(
+            Page(prefix=item.prefix, reference_path=item.target_path, slots=slots, is_repeat=is_repeat)
+        )
     return pages
 
 
@@ -132,9 +133,15 @@ class Session:
         logger.info("py-MUSHRA session random seed: %s", seed)
 
         items = discover_items(config.stimuli_dir)
-        pages = _build_half(items, rng) + _build_half(items, rng)
+        repeat_items = discover_items(config.repeats_dir)
+        # Repeat pages are shuffled in among the main pages rather than appended.
+        pages = _build_pages(items, rng, is_repeat=False) + _build_pages(repeat_items, rng, is_repeat=True)
+        rng.shuffle(pages)
         logger.info(
-            "Discovered %d item(s), built %d page(s) across two halves", len(items), len(pages)
+            "Discovered %d main item(s) and %d repeat item(s), built %d page(s)",
+            len(items),
+            len(repeat_items),
+            len(pages),
         )
         return cls(pages=pages, results_dir=config.results_dir, seed=seed)
 
@@ -171,7 +178,11 @@ class Session:
             for letter, path, hidden in page.slots
         ]
         logger.info(
-            "Page %d/%d stimuli:\n%s", self.page_index + 1, self.total_pages, "\n".join(lines)
+            "Page %d/%d%s stimuli:\n%s",
+            self.page_index + 1,
+            self.total_pages,
+            " (repeat)" if page.is_repeat else "",
+            "\n".join(lines),
         )
 
     def record_ratings(self, ratings: dict[str, float]) -> dict:
@@ -189,6 +200,7 @@ class Session:
                     page_index=self.page_index,
                     filename=path.name,
                     rating=ratings[letter],
+                    is_repeat=page.is_repeat,
                 )
             )
 
@@ -206,8 +218,10 @@ class Session:
         out_path = self.results_dir / filename
         with out_path.open("w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["order", "page", "filename", "rating"])
+            writer.writerow(["order", "page", "filename", "rating", "repeat"])
             for row in self._rows:
-                writer.writerow([row.order, row.page_index, row.filename, row.rating])
+                writer.writerow(
+                    [row.order, row.page_index, row.filename, row.rating, int(row.is_repeat)]
+                )
         logger.info("Wrote results to %s", out_path)
         return filename
