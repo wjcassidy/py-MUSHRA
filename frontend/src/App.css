@@ -99,8 +99,8 @@
 }
 
 .familiarisation-button {
-  width: 88px;
-  height: 88px;
+  width: var(--familiarisation-button-size, 88px);
+  height: var(--familiarisation-button-size, 88px);
   border-radius: 10px;
   border: 2px solid var(--border);
   background: var(--surface);
