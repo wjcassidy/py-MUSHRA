@@ -18,6 +18,7 @@ class Config:
     sample_rate: int
     block_size: int
     hide_volume: bool
+    ntfy_topic: str | None
 
     @classmethod
     def load(cls, path: Path = REPO_ROOT / "config.yaml") -> "Config":
@@ -38,5 +39,6 @@ class Config:
             sample_rate=int(raw["sample_rate"]),
             block_size=int(raw["block_size"]),
             hide_volume=bool(raw.get("hide_volume", False)),
+            ntfy_topic=raw.get("ntfy_topic") or None,
         )
 

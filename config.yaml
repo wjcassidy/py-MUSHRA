@@ -30,3 +30,9 @@ block_size: 1024
 
 # Hide the listener volume slider from the UI (volume stays at its default).
 hide_volume: true
+
+# ntfy.sh topic that "Call researcher" and inactivity alerts are pushed to as
+# mobile notifications (subscribe to this topic in the ntfy app). Anyone who
+# knows the topic name can read it, so pick something hard to guess.
+# Leave null to disable notifications.
+ntfy_topic: Aurora3_AnechoicChamber

@@ -4,11 +4,19 @@ import logging
 import threading
 import datetime
 
+from backend.notify import send_mobile_notification
+
 logger = logging.getLogger("py_mushra.researcher_call")
 
 ALERT_MESSAGE = (
     "\n\033[93m********************************** ALERT **********************************\n\n"
     "{time} - Participant has requested assistance; press enter to acknowledge.\n\n"
+    "***************************************************************************\n\x1b[37m"
+)
+
+IDLE_MESSAGE = (
+    "\n\033[93m********************************** ALERT **********************************\n\n"
+    "{time} - No interaction from the participant for one minute.\n\n"
     "***************************************************************************\n\x1b[37m"
 )
 
@@ -22,6 +30,7 @@ class ResearcherCall:
         self.active = False
         self.acknowledged = False
         self.listening = False
+        self.ntfy_topic: str | None = None
 
     def start_listening(self) -> None:
         # Read Enter from the controlling terminal rather than stdin, which is
@@ -47,7 +56,10 @@ class ResearcherCall:
     def set_active(self, active: bool) -> dict:
         with self._lock:
             if active and not self.active:
-                print(ALERT_MESSAGE.format(time=datetime.datetime.now().strftime("%H:%M")), end="", flush=True)
+                print(ALERT_MESSAGE.format(time=self.get_time_string()), end="", flush=True)
+                send_mobile_notification(
+                    self.ntfy_topic, f"{self.get_time_string()} - Participant has requested assistance."
+                )
                 if not self.listening:
                     print("(not listening for Enter -- no terminal available)\n", flush=True)
             elif not active and self.active:
@@ -69,6 +81,12 @@ class ResearcherCall:
                     flush=True,
                 )
         return self.state()
+
+    def idle_alert(self) -> None:
+        print(IDLE_MESSAGE.format(time=self.get_time_string()), end="", flush=True)
+        send_mobile_notification(
+            self.ntfy_topic, f"{self.get_time_string()} - No interaction from the participant for one minute."
+        )
 
     def _read_tty(self, tty) -> None:
         for _ in tty:

@@ -49,6 +49,7 @@ def startup() -> None:
     app.state.researcher_call.start_listening()
     try:
         config = Config.load()
+        app.state.researcher_call.ntfy_topic = config.ntfy_topic
         session = Session.build(config)
         engine = AudioEngine(config)
         engine.startup(session.current_page.reference_path)
@@ -245,3 +246,9 @@ def set_researcher_call(body: ResearcherCallRequest):
 @app.post("/api/call-researcher/acknowledge")
 def acknowledge_researcher_call():
     return app.state.researcher_call.acknowledge("web UI")
+
+
+@app.post("/api/idle-alert")
+def idle_alert():
+    app.state.researcher_call.idle_alert()
+    return {}

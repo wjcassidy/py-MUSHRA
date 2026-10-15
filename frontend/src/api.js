@@ -29,4 +29,5 @@ export const api = {
   getResearcherCall: () => request('/call-researcher'),
   acknowledgeResearcherCall: () => request('/call-researcher/acknowledge', { method: 'POST' }),
   setResearcherCall: (active) => request('/call-researcher', { method: 'POST', body: JSON.stringify({ active }) }),
+  sendIdleAlert: () => request('/idle-alert', { method: 'POST' }),
 }

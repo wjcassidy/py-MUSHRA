@@ -10,7 +10,10 @@ import ReorderButton from './components/ReorderButton'
 import WelcomePage from './components/WelcomePage'
 import FamiliarisationPage from './components/FamiliarisationPage'
 import CallResearcher from './components/CallResearcher'
+import IdlePrompt from './components/IdlePrompt'
 import './App.css'
+
+const IDLE_TIMEOUT_MS = 60_000
 
 export default function App() {
   const [stage, setStage] = useState('welcome')
@@ -40,6 +43,8 @@ export default function App() {
 
   const [callActive, setCallActive] = useState(false)
   const [callAcknowledged, setCallAcknowledged] = useState(false)
+
+  const [idle, setIdle] = useState(false)
 
   useEffect(() => {
     api
@@ -214,6 +219,28 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [callActive, callAcknowledged])
 
+  // Show the idle prompt after a minute without any input. Listeners use the
+  // capture phase so components that stop propagation still count as activity.
+  // Not timed while a researcher call is active, as the participant is already waiting.
+  useEffect(() => {
+    if (callActive) return
+    const events = ['pointerdown', 'keydown', 'wheel']
+    function goIdle() {
+      setIdle(true)
+      api.sendIdleAlert().catch((err) => setError(err.message))
+    }
+    let timer = setTimeout(goIdle, IDLE_TIMEOUT_MS)
+    function restartTimer() {
+      clearTimeout(timer)
+      timer = setTimeout(goIdle, IDLE_TIMEOUT_MS)
+    }
+    events.forEach((type) => window.addEventListener(type, restartTimer, true))
+    return () => {
+      clearTimeout(timer)
+      events.forEach((type) => window.removeEventListener(type, restartTimer, true))
+    }
+  }, [callActive])
+
   function handleCallToggle() {
     const active = !callActive
     setCallActive(active)
@@ -243,6 +270,7 @@ export default function App() {
   const appShell = (children) => (
     <div className={`app${callActive ? ' app--call' : ''}`}>
       {deviceSelectorBar}
+      {idle && !callActive && <IdlePrompt onDismiss={() => setIdle(false)} />}
       {children}
     </div>
   )
