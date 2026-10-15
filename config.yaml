@@ -5,8 +5,9 @@
 stimuli_dir: stimuli_main
 
 # Folder of repeated stimuli, following the same naming convention as
-# stimuli_dir. Each item here becomes an extra page, shuffled in randomly among
-# the main stimulus pages. Results rows from these pages have repeat=1.
+# stimuli_dir. Each item here becomes an extra page; these pages are presented,
+# in random order, at the start of the main test before the main stimulus pages.
+# Results rows from these pages have repeat=1.
 repeats_dir: stimuli_repeats
 
 # Folder of stimuli played on the familiarisation page (any .wav files --

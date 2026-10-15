@@ -134,9 +134,13 @@ class Session:
 
         items = discover_items(config.stimuli_dir)
         repeat_items = discover_items(config.repeats_dir)
-        # Repeat pages are shuffled in among the main pages rather than appended.
-        pages = _build_pages(items, rng, is_repeat=False) + _build_pages(repeat_items, rng, is_repeat=True)
-        rng.shuffle(pages)
+        # Repeat pages act as familiarisation pages: shuffled among themselves and
+        # presented before the (separately shuffled) main pages.
+        main_pages = _build_pages(items, rng, is_repeat=False)
+        repeat_pages = _build_pages(repeat_items, rng, is_repeat=True)
+        rng.shuffle(repeat_pages)
+        rng.shuffle(main_pages)
+        pages = repeat_pages + main_pages
         logger.info(
             "Discovered %d main item(s) and %d repeat item(s), built %d page(s)",
             len(items),

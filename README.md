@@ -35,7 +35,7 @@ If you render the loudspeaker decoding into the stimulus files, you can skip the
 
 2. Put `.wav` files in `stimuli/`, named `<prefix>_<suffix>.wav`. Files sharing a prefix form one test page. Exactly one file per item must use the suffix `target` (the reference); every other suffix is an anonymous test condition. A hidden reference is automatically added to each page and randomised among the lettered conditions.
 
-3. Put the repeated stimuli in `repeats/`, using the same naming convention. Each item becomes an additional page, randomly shuffled among the main stimulus pages. Rows from these pages are marked `repeat=1` in the results CSV.
+3. Put the repeated stimuli in `repeats/`, using the same naming convention. Each item becomes an additional page; these are presented in random order at the start of the main test, before the (also randomised) main stimulus pages. Rows from these pages are marked `repeat=1` in the results CSV.
 
 4. Place any `.wav` files into `familiarisation/` to be presented to the participant before the main test. They'll need to listen to all of these before continuing.
 
