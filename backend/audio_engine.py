@@ -19,7 +19,7 @@ PAUSE_FADE_SECONDS = 0.05
 # Listener-adjustable output volume range (dB), set before/during familiarisation.
 VOLUME_MIN_DB = -60.0
 VOLUME_MAX_DB = 0.0
-VOLUME_DEFAULT_DB = -10.0
+VOLUME_DEFAULT_DB = -11.0
 
 # PortAudio's PaErrorCode for "Invalid number of channels" -- not exposed publicly
 # by sounddevice, so we match on the numeric code from PortAudioError.args[1].
