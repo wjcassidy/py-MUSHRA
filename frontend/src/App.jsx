@@ -221,10 +221,10 @@ export default function App() {
 
   // Show the idle prompt after a minute without any input. Listeners use the
   // capture phase so components that stop propagation still count as activity.
-  // Only timed once the familiarisation page has been passed, and not while a
-  // researcher call is active, as the participant is already waiting.
+  // Only timed between passing the familiarisation page and completing the test,
+  // and not while a researcher call is active, as the participant is already waiting.
   useEffect(() => {
-    if (stage !== 'test' || callActive) return
+    if (stage !== 'test' || completed || callActive) return
     const events = ['pointerdown', 'keydown', 'wheel']
     function goIdle() {
       setIdle(true)
@@ -240,7 +240,7 @@ export default function App() {
       clearTimeout(timer)
       events.forEach((type) => window.removeEventListener(type, restartTimer, true))
     }
-  }, [stage, callActive])
+  }, [stage, completed, callActive])
 
   function handleCallToggle() {
     const active = !callActive
@@ -271,7 +271,7 @@ export default function App() {
   const appShell = (children) => (
     <div className={`app${callActive ? ' app--call' : ''}`}>
       {deviceSelectorBar}
-      {idle && !callActive && <IdlePrompt onDismiss={() => setIdle(false)} />}
+      {idle && !callActive && !completed && <IdlePrompt onDismiss={() => setIdle(false)} />}
       {children}
     </div>
   )
@@ -307,7 +307,7 @@ export default function App() {
         <h1>Test complete!</h1>
         <h2>Thank you for participating.</h2>
         {completed.csvFilename ? (
-          <p>Results saved.</p>
+          <p>The researcher has been notified and will enter shortly. Please wait.</p>
         ) : (
           <p>This test session has already been completed.</p>
         )}

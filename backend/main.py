@@ -230,6 +230,8 @@ def submit_ratings(body: RatingsRequest):
     engine.reset_page()
     engine.set_page_stimuli([] if session.is_finished else session.current_page.stimulus_paths)
     session.log_current_page()
+    if result.get("done"):
+        app.state.researcher_call.test_complete(result["csv_filename"])
     return result
 
 

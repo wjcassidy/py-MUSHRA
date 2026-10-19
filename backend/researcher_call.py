@@ -88,6 +88,11 @@ class ResearcherCall:
             self.ntfy_topic, f"{self.get_time_string()} - No interaction from the participant for one minute."
         )
 
+    def test_complete(self, csv_filename: str) -> None:
+        message = f"{self.get_time_string()} - Participant has completed the test."
+        print(f"\n{message} Results saved to {csv_filename}.\n", flush=True)
+        send_mobile_notification(self.ntfy_topic, message)
+
     def _read_tty(self, tty) -> None:
         for _ in tty:
             self.acknowledge("terminal")
