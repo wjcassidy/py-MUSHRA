@@ -221,9 +221,10 @@ export default function App() {
 
   // Show the idle prompt after a minute without any input. Listeners use the
   // capture phase so components that stop propagation still count as activity.
-  // Not timed while a researcher call is active, as the participant is already waiting.
+  // Only timed once the familiarisation page has been passed, and not while a
+  // researcher call is active, as the participant is already waiting.
   useEffect(() => {
-    if (callActive) return
+    if (stage !== 'test' || callActive) return
     const events = ['pointerdown', 'keydown', 'wheel']
     function goIdle() {
       setIdle(true)
@@ -239,7 +240,7 @@ export default function App() {
       clearTimeout(timer)
       events.forEach((type) => window.removeEventListener(type, restartTimer, true))
     }
-  }, [callActive])
+  }, [stage, callActive])
 
   function handleCallToggle() {
     const active = !callActive
