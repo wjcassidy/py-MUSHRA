@@ -13,7 +13,9 @@ from backend.config import Config
 
 logger = logging.getLogger("py_mushra.audio_engine")
 
-CROSSFADE_SECONDS = 0.05
+# Stimulus switches fade the current stimulus out, then the new one in, each
+# over this long with a raised-cosine envelope (so a switch takes twice this).
+SWITCH_FADE_SECONDS = 0.005
 PAUSE_FADE_SECONDS = 0.05
 
 # Listener-adjustable output volume range (dB), set before/during familiarisation.
@@ -87,9 +89,12 @@ class AudioEngine:
         self.playhead = 0
         self._carry = np.zeros((0, 0), dtype=np.float32)
 
-        self.crossfade_from: Path | None = None
-        self.crossfade_total = 0
-        self.crossfade_done = 0
+        # Stimulus switch in progress: switch_from fades out over the first
+        # switch_fade_samples of the switch, then current_path fades in over the
+        # next switch_fade_samples. switch_done counts samples into the switch.
+        self.switch_from: Path | None = None
+        self.switch_fade_samples = 1
+        self.switch_done = 0
 
         # Output gain envelope -- ramped (never stepped) toward _gain_target so
         # play/pause and stimulus toggles fade instead of clicking.
@@ -348,7 +353,7 @@ class AudioEngine:
 
     def _evict_unneeded(self) -> None:
         with self._lock, self._cache_lock:
-            keep = self._page_paths | {self.current_path, self.crossfade_from}
+            keep = self._page_paths | {self.current_path, self.switch_from}
             evicted = [self._stimulus_cache.pop(p) for p in list(self._stimulus_cache) if p not in keep]
         if evicted:
             logger.info("Released %.1f MB of stimulus audio", sum(a.nbytes for a in evicted) / 1e6)
@@ -372,8 +377,8 @@ class AudioEngine:
             self.current_path = None
             self.playhead = 0
             self._carry = np.zeros((0, 0), dtype=np.float32)
-            self.crossfade_from = None
-            self.crossfade_done = 0
+            self.switch_from = None
+            self.switch_done = 0
             self._gain = 0.0
             self._gain_target = 0.0
 
@@ -382,24 +387,41 @@ class AudioEngine:
         with self._lock:
             with self._cache_lock:
                 # Re-insert in case a page change evicted it since loading, so the
-                # callback can always find current_path/crossfade_from in the cache.
+                # callback can always find current_path/switch_from in the cache.
                 self._stimulus_cache.setdefault(path, audio)
             if self._carry.shape[1] > 0:
                 self.playhead = max(0, self.playhead - self._carry.shape[1])
+                if self.switch_from is not None:
+                    self.switch_done = max(0, self.switch_done - self._carry.shape[1])
                 self._carry = np.zeros((0, 0), dtype=np.float32)
+            was_playing = self.playing
             previous = self.current_path
             self.current_path = path
             self.playing = True
             self._gain_target = 1.0
-            if previous is not None and previous != path:
-                # Crossfade in the Ambisonic domain, so the external decoder only ever
-                # sees one (already-blended) signal.
-                self.crossfade_from = previous
-                self.crossfade_total = max(1, int(round(CROSSFADE_SECONDS * self.sample_rate)))
-                self.crossfade_done = 0
-            else:
-                self.crossfade_from = None
-                self.crossfade_done = 0
+            fade = self.switch_fade_samples
+            if not was_playing or previous is None:
+                # Nothing audible to fade out -- the play fade-in covers the start.
+                self.switch_from = None
+                self.switch_done = 0
+            elif self.switch_from is None:
+                if previous != path:
+                    self.switch_from = previous
+                    self.switch_fade_samples = fade = max(
+                        1, int(round(SWITCH_FADE_SECONDS * self.sample_rate))
+                    )
+                    self.switch_done = 0
+            elif self.switch_done < fade:
+                # Mid fade-out: keep fading switch_from out toward the new target,
+                # unless the listener went back to it -- then fade it back in from
+                # its current gain (the envelope mirrors around switch_done == fade).
+                if path == self.switch_from:
+                    self.switch_from = previous
+                    self.switch_done = 2 * fade - self.switch_done
+            elif path != previous:
+                # Mid fade-in of previous: fade it back out from its current gain.
+                self.switch_from = previous
+                self.switch_done = 2 * fade - self.switch_done
 
     def play(self) -> None:
         with self._lock:
@@ -429,6 +451,14 @@ class AudioEngine:
         if end <= source_len:
             return source[:, start:end]
         return np.concatenate([source[:, start:], source[:, : end - source_len]], axis=1)
+
+    def _read_output_chunk(self, path: Path, start_sample: int, length: int) -> np.ndarray:
+        """_read_chunk, zero-padded or truncated to num_channels."""
+        chunk = self._read_chunk(path, start_sample, length)
+        n = min(chunk.shape[0], self.num_channels)
+        processed = np.zeros((self.num_channels, length), dtype=np.float32)
+        processed[:n] = chunk[:n]
+        return processed
 
     def _callback(self, outdata: np.ndarray, frames: int, time_info, status) -> None:
         if status:
@@ -464,37 +494,27 @@ class AudioEngine:
                     break
 
                 length = self.block_size
-                chunk = self._read_chunk(self.current_path, self.playhead, length)
+                processed = self._read_output_chunk(self.current_path, self.playhead, length)
 
-                if self.crossfade_from is not None:
-                    from_chunk = self._read_chunk(self.crossfade_from, self.playhead, length)
-                    if from_chunk.shape[0] == chunk.shape[0]:
-                        idx = np.arange(self.crossfade_done, self.crossfade_done + length, dtype=np.float32)
-                        t = np.clip(idx / self.crossfade_total, 0.0, 1.0)
-                        gain_to = np.sin(t * np.pi / 2.0).astype(np.float32)
-                        gain_from = np.cos(t * np.pi / 2.0).astype(np.float32)
-                        chunk = from_chunk * gain_from[np.newaxis, :] + chunk * gain_to[np.newaxis, :]
-                    else:
-                        # Can't blend stimuli with different channel counts -- hard-cut
-                        # instead of crashing the audio callback.
-                        logger.error(
-                            "Cannot crossfade %s (%d ch) into %s (%d ch) -- channel count "
-                            "mismatch; hard-cutting instead.",
-                            self.crossfade_from.name,
-                            from_chunk.shape[0],
-                            self.current_path.name,
-                            chunk.shape[0],
-                        )
-                    self.crossfade_done += length
-                    if self.crossfade_done >= self.crossfade_total:
-                        self.crossfade_from = None
-                        self.crossfade_done = 0
+                if self.switch_from is not None:
+                    # Raised-cosine envelope: 1 -> 0 over the fade-out of switch_from,
+                    # then 0 -> 1 over the fade-in of current_path. Applied in the
+                    # Ambisonic domain, before the external decoder.
+                    fade = self.switch_fade_samples
+                    idx = np.arange(self.switch_done, self.switch_done + length)
+                    fading_out = idx < fade
+                    if fading_out.any():
+                        from_chunk = self._read_output_chunk(self.switch_from, self.playhead, length)
+                        processed = np.where(fading_out[np.newaxis, :], from_chunk, processed)
+                    phase = np.minimum(idx, 2 * fade).astype(np.float32) / fade
+                    envelope = (0.5 * (1.0 + np.cos(np.pi * phase))).astype(np.float32)
+                    processed = processed * envelope[np.newaxis, :]
+                    self.switch_done += length
+                    if self.switch_done >= 2 * fade:
+                        self.switch_from = None
+                        self.switch_done = 0
 
                 self.playhead += length
-
-                n = min(chunk.shape[0], self.num_channels)
-                processed = np.zeros((self.num_channels, chunk.shape[1]), dtype=np.float32)
-                processed[:n] = chunk[:n]
 
                 if self._gain != self._gain_target:
                     direction = 1.0 if self._gain_target > self._gain else -1.0

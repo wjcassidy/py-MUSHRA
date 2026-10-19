@@ -206,7 +206,7 @@ def familiarisation_select(body: FamiliarisationSelectRequest):
 @app.post("/api/familiarisation-finish")
 def familiarisation_finish():
     # Familiarisation and the main test share engine.select(), which can leave a
-    # crossfade queued from the last familiarisation clip into the first real
+    # stimulus-switch fade queued from the last familiarisation clip into the first real
     # stimulus -- clear that transport state before the test's own audio begins.
     engine = _engine()
     session = _session()
