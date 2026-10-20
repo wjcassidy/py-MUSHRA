@@ -124,7 +124,8 @@ def select(body: SelectRequest):
     page = session.current_page
     if body.letter != REFERENCE_LETTER and body.letter not in page.eval_letters:
         raise HTTPException(status_code=400, detail=f"Unknown letter '{body.letter}' for current page")
-    engine.select(page.path_for_letter(body.letter))
+    # Key by letter, so R <-> hidden reference (same file) still fades like any switch.
+    engine.select(page.path_for_letter(body.letter), key=body.letter)
     return {"ok": True}
 
 

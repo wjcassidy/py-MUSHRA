@@ -85,6 +85,10 @@ class AudioEngine:
         self._page_paths: frozenset[Path] = frozenset()
         self._preloader = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stimulus-preload")
         self.current_path: Path | None = None
+        # What the listener selected (e.g. a page letter). Switches fade when this
+        # changes, even if the file doesn't -- the hidden reference shares the
+        # reference's file, and switching between them must sound like any other.
+        self.current_key: object = None
         self.playing = False
         self.playhead = 0
         self._carry = np.zeros((0, 0), dtype=np.float32)
@@ -93,6 +97,7 @@ class AudioEngine:
         # switch_fade_samples of the switch, then current_path fades in over the
         # next switch_fade_samples. switch_done counts samples into the switch.
         self.switch_from: Path | None = None
+        self.switch_from_key: object = None
         self.switch_fade_samples = 1
         self.switch_done = 0
 
@@ -375,14 +380,20 @@ class AudioEngine:
         with self._lock:
             self.playing = False
             self.current_path = None
+            self.current_key = None
             self.playhead = 0
             self._carry = np.zeros((0, 0), dtype=np.float32)
             self.switch_from = None
+            self.switch_from_key = None
             self.switch_done = 0
             self._gain = 0.0
             self._gain_target = 0.0
 
-    def select(self, path: Path) -> None:
+    def select(self, path: Path, key: object = None) -> None:
+        """Switch playback to path. key identifies the selection (defaults to path);
+        selecting a different key fades out/in even when the file is the same."""
+        if key is None:
+            key = path
         audio = self._load_stimulus(path)  # read outside the lock-held callback path
         with self._lock:
             with self._cache_lock:
@@ -395,18 +406,18 @@ class AudioEngine:
                     self.switch_done = max(0, self.switch_done - self._carry.shape[1])
                 self._carry = np.zeros((0, 0), dtype=np.float32)
             was_playing = self.playing
-            previous = self.current_path
-            self.current_path = path
+            previous, previous_key = self.current_path, self.current_key
+            self.current_path, self.current_key = path, key
             self.playing = True
             self._gain_target = 1.0
             fade = self.switch_fade_samples
             if not was_playing or previous is None:
                 # Nothing audible to fade out -- the play fade-in covers the start.
-                self.switch_from = None
+                self.switch_from = self.switch_from_key = None
                 self.switch_done = 0
             elif self.switch_from is None:
-                if previous != path:
-                    self.switch_from = previous
+                if previous_key != key:
+                    self.switch_from, self.switch_from_key = previous, previous_key
                     self.switch_fade_samples = fade = max(
                         1, int(round(SWITCH_FADE_SECONDS * self.sample_rate))
                     )
@@ -415,12 +426,12 @@ class AudioEngine:
                 # Mid fade-out: keep fading switch_from out toward the new target,
                 # unless the listener went back to it -- then fade it back in from
                 # its current gain (the envelope mirrors around switch_done == fade).
-                if path == self.switch_from:
-                    self.switch_from = previous
+                if key == self.switch_from_key:
+                    self.switch_from, self.switch_from_key = previous, previous_key
                     self.switch_done = 2 * fade - self.switch_done
-            elif path != previous:
+            elif key != previous_key:
                 # Mid fade-in of previous: fade it back out from its current gain.
-                self.switch_from = previous
+                self.switch_from, self.switch_from_key = previous, previous_key
                 self.switch_done = 2 * fade - self.switch_done
 
     def play(self) -> None:
@@ -511,7 +522,7 @@ class AudioEngine:
                     processed = processed * envelope[np.newaxis, :]
                     self.switch_done += length
                     if self.switch_done >= 2 * fade:
-                        self.switch_from = None
+                        self.switch_from = self.switch_from_key = None
                         self.switch_done = 0
 
                 self.playhead += length
