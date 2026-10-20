@@ -15,7 +15,7 @@ logger = logging.getLogger("py_mushra.audio_engine")
 
 # Stimulus switches fade the current stimulus out, then the new one in, each
 # over this long with a raised-cosine envelope (so a switch takes twice this).
-SWITCH_FADE_SECONDS = 0.005
+SWITCH_FADE_SECONDS = 0.05
 PAUSE_FADE_SECONDS = 0.05
 
 # Listener-adjustable output volume range (dB), set before/during familiarisation.
