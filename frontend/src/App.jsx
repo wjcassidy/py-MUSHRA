@@ -307,7 +307,7 @@ export default function App() {
         <h1>Test complete!</h1>
         <h2>Thank you for participating.</h2>
         {completed.csvFilename ? (
-          <p>The researcher has been notified and will enter shortly. Please wait.</p>
+          <p>The researcher will enter shortly. You may lower the chair lift, but please do not jump down.</p>
         ) : (
           <p>This test session has already been completed.</p>
         )}

@@ -17,6 +17,12 @@
   color: var(--text);
 }
 
+.status-screen h1,
+.status-screen h2,
+.status-screen p {
+  margin: 0.25em 0;
+}
+
 .status-screen--error {
   color: #ff6b6b;
 }
