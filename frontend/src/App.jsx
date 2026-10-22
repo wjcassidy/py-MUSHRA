@@ -262,6 +262,7 @@ export default function App() {
 
   const deviceSelectorBar = (
     <header className="top-bar">
+      {sessionStart !== null && <SessionClock startTime={sessionStart} running={!completed} />}
       {stage === 'welcome' && (
         <DeviceSelector
           devices={devices}
@@ -271,7 +272,6 @@ export default function App() {
         />
       )}
       <VolumeControl volume={volume} onChange={handleVolumeChange} />
-      {sessionStart !== null && <SessionClock startTime={sessionStart} running={!completed} />}
       <CallResearcher active={callActive} acknowledged={callAcknowledged} onToggle={handleCallToggle} />
     </header>
   )

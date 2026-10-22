@@ -127,7 +127,6 @@
 }
 
 .top-bar {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -137,13 +136,9 @@
 }
 
 .session-clock {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   font-size: 14px;
   font-weight: 400;
   white-space: nowrap;
-  pointer-events: none;
 }
 
 .test-area {
