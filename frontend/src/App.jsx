@@ -11,6 +11,7 @@ import WelcomePage from './components/WelcomePage'
 import FamiliarisationPage from './components/FamiliarisationPage'
 import CallResearcher from './components/CallResearcher'
 import IdlePrompt from './components/IdlePrompt'
+import SessionClock from './components/SessionClock'
 import './App.css'
 
 const IDLE_TIMEOUT_MS = 60_000
@@ -46,6 +47,9 @@ export default function App() {
 
   const [idle, setIdle] = useState(false)
 
+  const [sessionStart, setSessionStart] = useState(null)
+  const [expectedCompletionTime, setExpectedCompletionTime] = useState(null)
+
   useEffect(() => {
     api
       .getSession()
@@ -54,6 +58,7 @@ export default function App() {
           setCompleted({ csvFilename: null })
         } else {
           setPage(data)
+          setExpectedCompletionTime(data.expected_completion_time)
         }
       })
       .catch((err) => setError(err.message))
@@ -183,6 +188,7 @@ export default function App() {
       .then(() => {
         setFamiliarisationPlaying(false)
         setVolume((v) => v && { ...v, locked: true })
+        setSessionStart(Date.now())
         setStage('test')
       })
       .catch((err) => setError(err.message))
@@ -256,14 +262,16 @@ export default function App() {
 
   const deviceSelectorBar = (
     <header className="top-bar">
-      <DeviceSelector
-        devices={devices}
-        selectedIndex={deviceIndex}
-        onChange={handleDeviceChange}
-        channelStatus={channelStatus}
-        locked={stage !== 'welcome'}
-      />
+      {stage === 'welcome' && (
+        <DeviceSelector
+          devices={devices}
+          selectedIndex={deviceIndex}
+          onChange={handleDeviceChange}
+          channelStatus={channelStatus}
+        />
+      )}
       <VolumeControl volume={volume} onChange={handleVolumeChange} />
+      {sessionStart !== null && <SessionClock startTime={sessionStart} running={!completed} />}
       <CallResearcher active={callActive} acknowledged={callAcknowledged} onToggle={handleCallToggle} />
     </header>
   )
@@ -375,7 +383,11 @@ export default function App() {
         </div>
       </main>
       <footer className="bottom-bar">
-        <ProgressBar current={page.page_index + 1} total={page.total_pages} />
+        <ProgressBar
+          current={page.page_index + 1}
+          total={page.total_pages}
+          expectedCompletionTime={expectedCompletionTime}
+        />
       </footer>
     </>
   )

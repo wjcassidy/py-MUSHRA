@@ -114,7 +114,11 @@ def get_session():
     session = _session()
     if session.is_finished:
         return {"done": True}
-    return {"done": False, **session.public_page_state()}
+    return {
+        "done": False,
+        "expected_completion_time": _config().expected_completion_time,
+        **session.public_page_state(),
+    }
 
 
 @app.post("/api/select")

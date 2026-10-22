@@ -19,6 +19,7 @@ class Config:
     block_size: int
     hide_volume: bool
     ntfy_topic: str | None
+    expected_completion_time: float | None
 
     @classmethod
     def load(cls, path: Path = REPO_ROOT / "config.yaml") -> "Config":
@@ -40,5 +41,6 @@ class Config:
             block_size=int(raw["block_size"]),
             hide_volume=bool(raw.get("hide_volume", False)),
             ntfy_topic=raw.get("ntfy_topic") or None,
+            expected_completion_time=raw.get("expected_completion_time") or None,
         )
 

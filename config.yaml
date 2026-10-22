@@ -36,3 +36,8 @@ hide_volume: true
 # knows the topic name can read it, so pick something hard to guess.
 # Leave null to disable notifications.
 ntfy_topic: Aurora3_AnechoicChamber
+
+# Expected time in minutes for a participant to complete the main test (after
+# familiarisation). The progress bar highlights the span of progress expected
+# between 10 and 20 minutes of session time. Leave null to hide the indicator.
+expected_completion_time: 60
