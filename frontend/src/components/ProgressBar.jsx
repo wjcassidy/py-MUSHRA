@@ -2,7 +2,7 @@
 const EXPECTED_WINDOW_MINUTES = [10, 20]
 // Shifts the estimate right of a straight time-proportional estimate, as
 // participants tend to speed up once warmed up to the task.
-const WARM_UP_SKEW = 1.1
+const WARM_UP_SKEW = 0.95
 
 export default function ProgressBar({ current, total, expectedCompletionTime }) {
   const progress = total > 0 ? Math.round((current / total) * 100) : 0
