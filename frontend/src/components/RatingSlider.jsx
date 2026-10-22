@@ -2,7 +2,7 @@ import { useRef } from 'react'
 
 // 6 major ticks evenly spanning 0-100, with two minor ticks between each pair.
 const MAJOR_TICKS = 5
-const SUBDIVISIONS = 1
+const SUBDIVISIONS = 5
 const STEPS = (MAJOR_TICKS - 1) * SUBDIVISIONS
 const TICKS = Array.from({ length: STEPS + 1 }, (_, i) => ({
   position: (i / STEPS) * 100,
@@ -10,7 +10,7 @@ const TICKS = Array.from({ length: STEPS + 1 }, (_, i) => ({
 }))
 
 // Labels evenly spaced from the maximum (top) to the minimum (bottom).
-const LABELS = ['Identical', 'Very similar', 'Similar', 'Somewhat similar', 'Not at all similar']
+const LABELS = ['Sounds the same', 'Very similar', 'Similar', 'Somewhat similar', 'Not at all similar']
 const INTERVAL = 100 / (LABELS.length - 1)
 
 export default function RatingSlider({ value, touched, active, onChange, onActivate }) {

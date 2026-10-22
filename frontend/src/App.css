@@ -312,7 +312,7 @@
   right: 0;
   left: 0;
   transform: translateY(50%);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.2;
 }
 
@@ -375,7 +375,7 @@
 }
 
 .rating-slider__tick--major {
-  width: 10px;
+  width: 6px;
   opacity: 1;
 }
 
