@@ -1,5 +1,5 @@
 // Session-time window (minutes) whose expected progress is highlighted on the bar.
-const EXPECTED_WINDOW_MINUTES = [10, 20]
+const EXPECTED_WINDOW_MINUTES = [12.5, 17.5]
 // Shifts the estimate right of a straight time-proportional estimate, as
 // participants tend to speed up once warmed up to the task.
 const WARM_UP_SKEW = 0.95
