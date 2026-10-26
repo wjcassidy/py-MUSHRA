@@ -32,7 +32,7 @@ export default function ProgressBar({ current, total, expectedCompletionTime }) 
               className="progress-bar__expected-label"
               style={{ left: `${(expected.start + expected.end) / 2}%` }}
             >
-              15 min. estimate
+              15 min. target
             </span>
           </>
         )}
