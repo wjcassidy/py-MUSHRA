@@ -8,6 +8,10 @@ Current criteria:
   - Hidden reference: a rating of the hidden reference ("target" condition) below
     HIDDEN_REF_MIN_RATING counts as a miss; subjects with more than
     HIDDEN_REF_MAX_MISSES misses are excluded.
+  - Repeat consistency (if REPEAT_CONSISTENCY_ENABLED): each repeated trial
+    (repeat=1) is paired with the original rating of the same stimulus; subjects
+    whose mean absolute difference between the two exceeds
+    REPEAT_CONSISTENCY_MAX_MEAN_DIFF are excluded.
 
 Usage:
     python plotting/exclusion_criteria.py [--results-dir DIR]
@@ -21,9 +25,11 @@ from common import DEFAULT_RESULTS_DIR, FILENAME_RE
 
 # Settings
 HIDDEN_REF_CONDITION = "target"               # Condition name of the hidden reference
-HIDDEN_REF_MIN_RATING = 90                   # Hidden reference ratings below this count as a miss
-HIDDEN_REF_MAX_MISSES = 5                  # Exclude subjects with more misses than this
+HIDDEN_REF_MIN_RATING = 80                   # Hidden reference ratings below this count as a miss
+HIDDEN_REF_MAX_MISSES = 10                  # Exclude subjects with more misses than this
 HIDDEN_REF_INCLUDE_REPEATS = True             # Count misses on repeated trials (repeat=1) as well
+REPEAT_CONSISTENCY_ENABLED = False            # Exclude subjects who rate repeated trials inconsistently
+REPEAT_CONSISTENCY_MAX_MEAN_DIFF = 10         # Max mean |original - repeat| rating difference
 
 
 def hidden_reference_misses(rows):
@@ -41,6 +47,13 @@ def hidden_reference_misses(rows):
     return misses
 
 
+def repeat_differences(rows):
+    """Return |original - repeat| rating differences for every repeated stimulus."""
+    originals = {row["filename"]: float(row["rating"]) for row in rows if row["repeat"] == "0"}
+    return [abs(float(row["rating"]) - originals[row["filename"]])
+            for row in rows if row["repeat"] == "1" and row["filename"] in originals]
+
+
 def exclusion_reasons(rows):
     """Return a list of reasons for excluding a subject (empty if included)."""
     reasons = []
@@ -48,6 +61,13 @@ def exclusion_reasons(rows):
     if len(misses) > HIDDEN_REF_MAX_MISSES:
         reasons.append(f"{len(misses)} hidden reference ratings < {HIDDEN_REF_MIN_RATING} "
                        f"(max {HIDDEN_REF_MAX_MISSES})")
+    if REPEAT_CONSISTENCY_ENABLED:
+        differences = repeat_differences(rows)
+        if differences:
+            mean_diff = sum(differences) / len(differences)
+            if mean_diff > REPEAT_CONSISTENCY_MAX_MEAN_DIFF:
+                reasons.append(f"mean repeat rating difference {mean_diff:.1f} over {len(differences)} "
+                               f"stimuli (max {REPEAT_CONSISTENCY_MAX_MEAN_DIFF})")
     return reasons
 
 
