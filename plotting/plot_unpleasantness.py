@@ -22,12 +22,16 @@ from scipy.io import wavfile
 from common import CONDITION_COLOURS, GRID_COLOUR
 
 # Settings
-COMBINATION = "R1T1"                          # Passive/target combination to plot
-LISTENING_TEST_ONLY = True                   # Only the source/receiver RIRs convolved with the excitations
+COMBINATION = "R2T4"                          # Passive/target combination to plot
+LISTENING_TEST_ONLY = False                   # Only the source/receiver RIRs convolved with the excitations
 # 0-indexed, as in the optimisation outputs (the dataset H_SR_TEST files are 1-indexed). Matches
 # PyRES-ClosedLoop/examples/convolve_*_irs_with_excitation.py, pooling the sources of all excitations
 LISTENING_TEST_RECEIVER = 1
 LISTENING_TEST_SOURCES = [0, 1, 2, 3]
+# When LISTENING_TEST_ONLY is False: include the stress-test positions (the last receivers/sources of each test set)
+INCLUDE_NON_CENTRAL_POSITIONS = False
+NUM_STRESS_TEST_RECEIVERS = 4
+NUM_STRESS_TEST_SOURCES = 2
 DATASET_ROOT = Path("/Volumes/WillFootage/PhD/AAESOptimisationDatasetRIRs")
 MODEL_SRC_DIR = Path(__file__).resolve().parents[2] / "AAESUnpleasantnessModel" / "Src"
 
@@ -46,10 +50,21 @@ METRIC_LABELS = ["Spatial\nAsymmetry", "Flutter\nEcho", "Colouration", "HF\nDamp
 YLIM = (0.0, 1.0)
 
 
-def condition_files(combination, listening_test_only=False):
+def exclude_stress_test_positions(files):
+    """Drop the RIRs of the last NUM_STRESS_TEST_RECEIVERS receivers and NUM_STRESS_TEST_SOURCES sources."""
+    indices = {f: tuple(map(int, re.search(r"_R(\d+)_S(\d+)\.wav$", f.name).groups())) for f in files}
+    receivers = sorted({r for r, _ in indices.values()})
+    sources = sorted({s for _, s in indices.values()})
+    central_receivers = set(receivers[:len(receivers) - NUM_STRESS_TEST_RECEIVERS])
+    central_sources = set(sources[:len(sources) - NUM_STRESS_TEST_SOURCES])
+    return [f for f in files if indices[f][0] in central_receivers and indices[f][1] in central_sources]
+
+
+def condition_files(combination, listening_test_only=False, include_non_central_positions=True):
     """Return {condition: [test RIR paths]} for a combination such as "R1T5".
 
     If listening_test_only is True, only the RIRs used for the listening test stimuli are returned.
+    Otherwise, if include_non_central_positions is False, the stress-test positions are excluded.
     """
     match = re.fullmatch(r"R(\d+)T(\d+)", combination)
     if match is None:
@@ -68,6 +83,8 @@ def condition_files(combination, listening_test_only=False):
             files[condition] = [directory / pattern.format(r=r, s=s + index_offset) for s in LISTENING_TEST_SOURCES]
         else:
             files[condition] = sorted(directory.glob(pattern.format(r="*", s="*")))
+            if not include_non_central_positions:
+                files[condition] = exclude_stress_test_positions(files[condition])
     return files
 
 
@@ -152,7 +169,7 @@ def plot(combination, all_scores):
 
 def main():
     all_scores = {}
-    for condition, files in condition_files(COMBINATION, LISTENING_TEST_ONLY).items():
+    for condition, files in condition_files(COMBINATION, LISTENING_TEST_ONLY, INCLUDE_NON_CENTRAL_POSITIONS).items():
         if not files:
             raise SystemExit(f"No test RIRs found for {CONDITION_LABELS[condition]} ({COMBINATION})")
         print(f"Computing scores for {CONDITION_LABELS[condition]} ({len(files)} files)...")
