@@ -20,11 +20,12 @@ ALL_SIGNALS = "All signals"
 SIGNAL_NAMES = {"Beet": "Classical", "Hand": "Handclaps", "Slow": "Pop"}
 
 CONDITIONS = ["target", "fulloptim", "geq", "passive"]
+# Sampled from matplotlib's magma colormap at np.linspace(0.15, 0.8, 4)
 CONDITION_COLOURS = {
-    "target": "#2a78d6",
-    "fulloptim": "#eb6834",
-    "geq": "#1baf7a",
-    "passive": "#eda100",
+    "target": "#251255",
+    "fulloptim": "#7e2482",
+    "geq": "#d8456c",
+    "passive": "#fe9f6d",
 }
 CONDITION_MARKERS = {"target": "o", "fulloptim": "s", "geq": "D", "passive": "^"}
 GRID_COLOUR = "#e5e4df"
